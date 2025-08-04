@@ -23,10 +23,3 @@ A healthcare appointment management system featuring:
 ✅ **Multi-Channel Notifications**  
 ✅ **Intelligent Queue Management**  
 ✅ **HIPAA-Compliant Audit Logging**
-
-```mermaid
-graph LR
-    Patient -->|Schedule| API
-    API -->|WebSocket| Dashboard
-    API -->|HL7/FHIR| EHR
-    API -->|SMS/Email| Notifications
