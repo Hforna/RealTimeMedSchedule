@@ -37,6 +37,8 @@ namespace MedSchedule.Infrastructure
             string signKey = configuration["services:auth:token:signKey"]!;
 
             services.AddScoped<ITokenService, TokenService>(d => new TokenService(signKey, expiresAt));
+
+            services.AddSingleton<IPasswordEncryptService, BCryptService>();
         }
 
         static void AddIdentity(IServiceCollection services)

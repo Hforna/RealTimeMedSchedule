@@ -1,0 +1,24 @@
+﻿using MedSchedule.Application.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MedSchedule.Application
+{
+    public static class DependenciesConfiguration
+    {
+        public static void AddApplication(this IServiceCollection services, IConfiguration configuration)
+        {
+            AddServices(services);
+        }
+
+        static void AddServices(IServiceCollection services)
+        {
+            services.AddScoped<IUserService, UserService>();
+        }
+    }
+}

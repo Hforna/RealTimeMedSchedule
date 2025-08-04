@@ -12,6 +12,8 @@ namespace MedSchedule.Domain.Aggregates.UserAggregate
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiresAt { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
 
     }
 
