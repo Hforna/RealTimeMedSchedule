@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MedSchedule.Domain.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MedSchedule.Infrastructure.Services
 {
-    public class BCryptService
+    public class BCryptService : IPasswordEncryptService
     {
         public string GenerateHash(string password)
         {

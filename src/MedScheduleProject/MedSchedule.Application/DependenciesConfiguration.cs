@@ -19,6 +19,7 @@ namespace MedSchedule.Application
         static void AddServices(IServiceCollection services)
         {
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ILoginService, LoginService>();
         }
     }
 }

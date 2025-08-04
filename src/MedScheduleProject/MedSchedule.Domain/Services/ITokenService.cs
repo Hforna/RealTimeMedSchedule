@@ -10,5 +10,7 @@ namespace MedSchedule.Domain.Services
     public interface ITokenService
     {
         public string GenerateToken(List<Claim> claims, Guid userId);
+        public DateTime GenerateExpiration();
+        public string GenerateRefreshToken();
     }
 }

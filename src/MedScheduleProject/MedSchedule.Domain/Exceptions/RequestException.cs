@@ -6,14 +6,15 @@ using System.Threading.Tasks;
 
 namespace MedSchedule.Domain.Exceptions
 {
-    public class DomainException : BaseException
+    public class RequestException : BaseException
     {
-        public DomainException(string message) : base(message)
+        public RequestException(List<string> errors) : base(errors)
         {
         }
 
-        public DomainException(List<string> errors) : base(string.Empty)
+        public RequestException(string message) : base(message)
         {
+
         }
     }
 }

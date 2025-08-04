@@ -21,6 +21,9 @@ namespace MedSchedule.Infrastructure.Services
             _expiresAt = expiresAt;
         }
 
+        public DateTime GenerateExpiration() => DateTime.UtcNow.AddMinutes(_expiresAt);
+
+        public string GenerateRefreshToken() => Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         public string GenerateToken(List<Claim> claims, Guid userId)
         {
             claims.Add(new Claim(ClaimTypes.Sid, userId.ToString()));
