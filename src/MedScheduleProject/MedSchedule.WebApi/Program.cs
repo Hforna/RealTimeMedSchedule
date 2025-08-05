@@ -1,5 +1,6 @@
 using MedSchedule.Application;
 using MedSchedule.Infrastructure;
+using MedSchedule.WebApi.Filter;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddMvc(d => d.Filters.Add(typeof(ExceptionHandlingFilter)));
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
