@@ -1,4 +1,5 @@
-﻿using MedSchedule.Domain.Enums;
+﻿using MedSchedule.Domain.AggregatesModel.UserAggregate;
+using MedSchedule.Domain.Enums;
 using MedSchedule.Domain.Exceptions;
 using MedSchedule.Domain.ValueObjects;
 using System;
@@ -28,6 +29,8 @@ namespace MedSchedule.Domain.AggregatesModel.AppointmentAggregate
                 _priorityScore = value;
             }
         }
+        public Guid SpecialtyId { get; set; }
+        public Specialty Specialty { get; set; }
         public EAppointmentStatus AppointmentStatus { get; set; }
     }
 }

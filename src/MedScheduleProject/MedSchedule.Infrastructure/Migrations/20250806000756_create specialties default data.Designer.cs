@@ -4,6 +4,7 @@ using MedSchedule.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedSchedule.Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectDataContext))]
-    partial class ProjectDataContextModelSnapshot : ModelSnapshot
+    [Migration("20250806000756_create specialties default data")]
+    partial class createspecialtiesdefaultdata
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

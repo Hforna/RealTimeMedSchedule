@@ -34,6 +34,19 @@ namespace MedSchedule.Infrastructure.Persistence
         public DbSet<Specialty> Specialties { get; set; }
         public DbSet<Notification> Notifications { get; set; }
 
+        private List<Specialty> AddDefaultSpecialties()
+        {
+            return new List<Specialty>()
+            {
+                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 20, MinEmergencySlots = 2, Name = "Cardiology" },
+                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 15, MinEmergencySlots = 4, Name = "Pediatrics" },
+                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 90, MinEmergencySlots = 3, Name = "Oncology" },
+                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 30, MinEmergencySlots = 3, Name = "Endocrinology" },
+                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 20, MinEmergencySlots = 4, Name = "Orthopedics" },
+                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 30, MinEmergencySlots = 4, Name = "Ophthalmology" },
+            };
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -44,9 +57,10 @@ namespace MedSchedule.Infrastructure.Persistence
 
             builder.Entity<Staff>().HasOne(d => d.User);
 
+            builder.Entity<Specialty>().HasData(AddDefaultSpecialties());
+
             builder.ApplyConfigurationsFromAssembly(typeof(ProjectDataContext).Assembly);
         }
-
     }
 
     public class ProjectDataContextFactory : IDesignTimeDbContextFactory<ProjectDataContext>
