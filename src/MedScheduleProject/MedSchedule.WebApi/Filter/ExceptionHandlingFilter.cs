@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace MedSchedule.WebApi.Filter
 {
-    public class ExceptionHandlerFilter : IExceptionFilter
+    public class ExceptionHandlingFilter : IExceptionFilter
     {
         public void OnException(ExceptionContext context)
         {

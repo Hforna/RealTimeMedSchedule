@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MedSchedule.Domain.Enums
+namespace MedSchedule.Domain.Services
 {
-    public enum EPriorityLevel
+    public interface IRequestService
     {
-        ROUTINE,
-        EMERGENCY,
-        URGENT,
+        public string GetBearerToken();
     }
 }

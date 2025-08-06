@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MedSchedule.Domain.Aggregates.UserAggregate;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -12,5 +13,6 @@ namespace MedSchedule.Domain.Services
         public string GenerateToken(List<Claim> claims, Guid userId);
         public DateTime GenerateExpiration();
         public string GenerateRefreshToken();
+        public Task<User?> GetUserByToken();
     }
 }

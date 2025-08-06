@@ -1,7 +1,10 @@
 ﻿using MedSchedule.Domain.Aggregates.UserAggregate;
+using MedSchedule.Domain.Repositories;
 using MedSchedule.Domain.Services;
 using MedSchedule.Infrastructure.Persistence;
+using MedSchedule.Infrastructure.Repositories;
 using MedSchedule.Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +24,7 @@ namespace MedSchedule.Infrastructure
             AddDbContext(services, configuration);
             AddIdentity(services);
             AddServices(services, configuration);
+            AddRepositories(services);
         }
 
         static void AddDbContext(IServiceCollection services, IConfiguration configuration)
@@ -30,15 +34,32 @@ namespace MedSchedule.Infrastructure
             services.AddDbContext<ProjectDataContext>(d => d.UseSqlServer(connection));
         }
 
+        static void AddRepositories(IServiceCollection services)
+        {
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IGenericRepository, GenericRepository>();
+            services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+        }
+
         static void AddServices(IServiceCollection services, IConfiguration configuration)
         {
             //expires in minutes
             int expiresAt = int.Parse(configuration["services:auth:token:expiresAt"]!);
             string signKey = configuration["services:auth:token:signKey"]!;
 
-            services.AddScoped<ITokenService, TokenService>(d => new TokenService(signKey, expiresAt));
+            services.AddScoped<ITokenService, TokenService>(d => {
+                using var scope = d.CreateScope();
+
+                return new TokenService(
+                    signKey,
+                    expiresAt,
+                    scope.ServiceProvider.GetRequiredService<IRequestService>(),
+                    scope.ServiceProvider.GetRequiredService<IUserRepository>());
+                });
 
             services.AddSingleton<IPasswordEncryptService, BCryptService>();
+            services.AddScoped<IRequestService, RequestService>();
         }
 
         static void AddIdentity(IServiceCollection services)

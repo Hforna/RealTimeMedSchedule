@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MedSchedule.Domain.Enums
+namespace MedSchedule.Domain.Repositories
 {
-    public enum EPriorityLevel
+    public interface IUnitOfWork
     {
-        ROUTINE,
-        EMERGENCY,
-        URGENT,
+        public Task Commit();
     }
 }
