@@ -15,7 +15,7 @@ namespace MedSchedule.Domain.AggregatesModel.UserAggregate
         public User? User { get; set; }
         public string Role { get; set; }
         public int MaxPriorityLevel { get; set; }
-        public required ScheduleWork ScheduleWork { get; set; }
+        public required WorkShift WorkShift { get; set; }
         public Guid? SpecialtyId { get; set; }
         public Specialty? Specialty { get; set; }
         public IList<Appointment>? Appointments { get; set; }

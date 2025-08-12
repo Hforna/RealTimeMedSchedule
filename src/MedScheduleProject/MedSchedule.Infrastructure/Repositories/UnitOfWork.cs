@@ -12,10 +12,21 @@ namespace MedSchedule.Infrastructure.Repositories
     {
         private readonly ProjectDataContext _context;
 
-        public UnitOfWork(ProjectDataContext context)
+        public UnitOfWork(ProjectDataContext context, IUserRepository userRepository, 
+            IAppointmentRepository appointmentRepository, IGenericRepository genericRepository, IQueueRepository queueRepository)
         {
             _context = context;
+            UserRepository = userRepository;
+            AppointmentRepository = appointmentRepository;
+            GenericRepository = genericRepository;
+            QueueRepository = queueRepository;
         }
+
+        public IUserRepository UserRepository { get; }
+        public IAppointmentRepository AppointmentRepository { get; }
+        public IGenericRepository GenericRepository { get; }
+        public IQueueRepository QueueRepository { get; }
+
 
         public async Task Commit()
         {

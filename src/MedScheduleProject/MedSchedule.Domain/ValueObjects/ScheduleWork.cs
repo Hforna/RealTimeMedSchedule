@@ -60,7 +60,7 @@ namespace MedSchedule.Domain.ValueObjects
             if ((StartHours > 23 || StartHours < 0) || (EndHours > 23 || EndHours < 0))
                 throw new DomainException("Work time hours must be between 0 and 23");
 
-            if ((StartMinutes > 23 || StartMinutes < 0) || (EndMinutes > 23 || EndMinutes < 0))
+            if ((StartMinutes > 59 || StartMinutes < 0) || (EndMinutes > 59 || EndMinutes < 0))
                 throw new DomainException("Work time minutes must be between 0 and 59");
         }
 

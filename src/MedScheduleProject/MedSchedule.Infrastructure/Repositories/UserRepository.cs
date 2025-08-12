@@ -1,4 +1,5 @@
 ﻿using MedSchedule.Domain.Aggregates.UserAggregate;
+using MedSchedule.Domain.AggregatesModel.UserAggregate;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,21 @@ namespace MedSchedule.Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task<List<Staff>?> GetStaffsBySpecialty(Guid specialtyId)
+        {
+            return await _context.Staffs
+                .AsNoTracking()
+                .Where(d => d.Role == StaffRoles.Professional && d.SpecialtyId == specialtyId)
+                .ToListAsync();
+        }
+
         public async Task<User?> GetUserById(Guid id) => await _context.Users.SingleOrDefaultAsync(d => d.Id == id);
+
+        public async Task<Specialty?> SpecialtyByName(string specialty)
+        {
+            return await _context.Specialties
+                .AsNoTracking()
+                .SingleOrDefaultAsync(d => d.Name.Equals(specialty, StringComparison.OrdinalIgnoreCase));
+        }
     }
 }
