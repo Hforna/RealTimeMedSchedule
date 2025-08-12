@@ -17,4 +17,16 @@ namespace MedSchedule.Domain.Exceptions
 
         }
     }
+
+    public class ResourceNotFoundException : BaseException
+    {
+        public ResourceNotFoundException(List<string> errors) : base(errors)
+        {
+        }
+
+        public ResourceNotFoundException(string message) : base(message)
+        {
+
+        }
+    }
 }

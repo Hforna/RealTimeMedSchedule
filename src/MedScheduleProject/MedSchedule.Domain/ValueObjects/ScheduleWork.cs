@@ -20,12 +20,37 @@ namespace MedSchedule.Domain.ValueObjects
             Validate();
         }
 
+        public ScheduleWork(int startHours, int startMinutes)
+        {
+            StartHours = startHours;
+            StartMinutes = startMinutes;
+        }
+
         public int StartHours { get; set; }
         public int StartMinutes { get; set; }
         public int EndHours { get; set; }
         public int EndMinutes { get; set; }
+        public DateTime AppointmentDate { get; set; }
 
-        
+        public void CalculateTotalTimeForFinish(int avgConsultTime)
+        {
+            if(StartMinutes + avgConsultTime >= 60)
+            {
+                var toSixty = 60 - StartMinutes;
+                decimal total = (toSixty - avgConsultTime) / 60;
+                var splitTime = total.ToString().Split(".");
+                var totalHours = int.Parse(splitTime[0]);
+                var totalMinutes = int.Parse(splitTime[1][..2]);
+
+                EndHours = totalHours;
+                EndMinutes = totalMinutes;
+            } else
+            {
+                EndHours = StartHours;
+                EndMinutes = StartMinutes + avgConsultTime;
+            }
+            Validate();
+        }
 
         private void Validate()
         {

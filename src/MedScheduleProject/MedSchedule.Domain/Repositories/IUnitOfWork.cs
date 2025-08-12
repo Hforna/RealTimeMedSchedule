@@ -8,6 +8,10 @@ namespace MedSchedule.Domain.Repositories
 {
     public interface IUnitOfWork
     {
+        public IUserRepository UserRepository { get; }
+        public IAppointmentRepository AppointmentRepository { get; }
+        public IGenericRepository GenericRepository { get; }
+        public IQueueRepository  QueueRepository { get; }
         public Task Commit();
     }
 }

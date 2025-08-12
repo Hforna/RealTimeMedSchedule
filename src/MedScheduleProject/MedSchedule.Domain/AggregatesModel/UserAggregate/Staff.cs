@@ -1,4 +1,5 @@
 ﻿using MedSchedule.Domain.Aggregates.UserAggregate;
+using MedSchedule.Domain.AggregatesModel.AppointmentAggregate;
 using MedSchedule.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,13 @@ namespace MedSchedule.Domain.AggregatesModel.UserAggregate
         public required ScheduleWork ScheduleWork { get; set; }
         public Guid? SpecialtyId { get; set; }
         public Specialty? Specialty { get; set; }
+        public IList<Appointment>? Appointments { get; set; }
+    }
+
+    public class StaffRoles
+    {
+        public const string Professional = "professional";
+        public const string Admin = "admin";
     }
 
     public class Specialty : Entity

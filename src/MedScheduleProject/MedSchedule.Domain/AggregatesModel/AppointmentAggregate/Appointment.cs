@@ -15,6 +15,7 @@ namespace MedSchedule.Domain.AggregatesModel.AppointmentAggregate
         public Guid PatientId { get; set; }
         public Guid StaffId { get; set; }
         public ScheduleWork Schedule { get; set; }
+        public DateTime? CheckInDate { get; set; }
         public decimal Duration => Schedule.DurationInHours();
         public EPriorityLevel PriorityLevel { get; set; }
         private int _priorityScore;

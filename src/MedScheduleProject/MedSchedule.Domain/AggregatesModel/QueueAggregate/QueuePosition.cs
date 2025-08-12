@@ -1,4 +1,8 @@
 ﻿using MedSchedule.Domain.AggregatesModel.AppointmentAggregate;
+using MedSchedule.Domain.Enums;
+using MedSchedule.Domain.Exceptions;
+using MedSchedule.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,5 +21,91 @@ namespace MedSchedule.Domain.AggregatesModel.QueueAggregate
         public int EstimatedMinutes { get; set; }
         public int EffectivePosition { get; set; }
         public DateTime LastUpdate { get; set; }
+    }
+
+    public interface IQueueDomainService
+    {
+        public Task<QueuePosition> SetQueuePosition(QueueRoot queueRoot, Appointment appointment);
+    }
+
+    public class QueueDomainService : IQueueDomainService
+    {
+        private readonly IUnitOfWork _uow;
+        private readonly ILogger<QueueDomainService> _logger;
+
+        public QueueDomainService(IUnitOfWork uow, ILogger<QueueDomainService> logger)
+        {
+            _uow = uow;
+            _logger = logger;
+        }
+
+        public async Task<QueuePosition> SetQueuePosition(QueueRoot queueRoot, Appointment appointment)
+        {
+            if (queueRoot.QueuePositions is null)
+                throw new DomainException("Queue root must contains queue positions for set appointment position");
+
+            var queuePosition = new QueuePosition()
+            {
+                Appointment = appointment,
+                AppointmentId = appointment.Id,
+                LastUpdate = DateTime.UtcNow
+            };
+
+            queueRoot.QueuePositions.Add(queuePosition);
+            var rawPositions = queueRoot.QueuePositions
+                .OrderBy(d => d.Appointment.Schedule.AppointmentDate)
+                .ToList();
+
+            queuePosition.RawPosition = rawPositions.IndexOf(queuePosition) + 1;
+
+            var notChecked = new List<QueuePosition>();
+
+            for(var i = 0; i < rawPositions.Count; i++)
+            {
+                var currPosition = rawPositions[i];
+                if (currPosition.Appointment.CheckInDate is not null)
+                {
+                    currPosition.EffectivePosition = CalculatePosition(currPosition.Appointment.Schedule.AppointmentDate, 
+                        currPosition.Appointment.PriorityLevel, (DateTime)currPosition.Appointment.CheckInDate, currPosition.RawPosition);
+
+                    //Calculate time to wait on room until patient be called
+                    var avgConsultTime = appointment.Specialty.AvgConsultationTime;
+                    var patientsAhead = rawPositions[..i];
+
+                    currPosition.EstimatedMinutes = avgConsultTime * patientsAhead.Count;
+                    currPosition.LastUpdate = DateTime.UtcNow;
+                }
+                else
+                {
+                    notChecked.Add(currPosition);
+                }
+            }
+            if (!rawPositions.Contains(queuePosition))
+                await _uow.GenericRepository.Add<QueuePosition>(queuePosition);
+
+            _uow.GenericRepository.UpdateRange<QueuePosition>(rawPositions);
+            await _uow.Commit();
+
+            return queuePosition;
+        }
+
+        private int CalculatePosition(DateTime scheduled, EPriorityLevel priorityLevel, DateTime checkIn, int rawPosition)
+        {
+            var offset = (checkIn - scheduled).TotalMinutes;
+            rawPosition += (int)(offset / 15);
+            rawPosition -= GetPriorityLevel(priorityLevel);
+
+            _logger.LogInformation($"Position calculated: {rawPosition}");
+
+            return rawPosition;
+        }
+
+        private int GetPriorityLevel(EPriorityLevel priorityLevel) => priorityLevel switch
+        {
+            EPriorityLevel.EMERGENCY => 3,
+            EPriorityLevel.URGENT => 2,
+            EPriorityLevel.ROUTINE => 1,
+            _ => 0
+        };
     }
 }
