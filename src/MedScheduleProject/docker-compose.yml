@@ -1,0 +1,17 @@
+services:
+  medschedule.webapi:
+    image: ${DOCKER_REGISTRY-}medschedulewebapi
+    build:
+      context: .
+      dockerfile: MedSchedule.WebApi/Dockerfile
+  
+  sqlserver:
+    container_name: sqlserver
+    image: mcr.microsoft.com/mssql/server:2019-latest
+
+
+volumes:
+  sqlserver_data:
+
+networks:
+  backend:
