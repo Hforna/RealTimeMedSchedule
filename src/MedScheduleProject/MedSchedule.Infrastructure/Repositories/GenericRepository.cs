@@ -23,6 +23,11 @@ namespace MedSchedule.Infrastructure.Repositories
             await _context.Set<T>().AddAsync(entity);
         }
 
+        public void Update<T>(T entity) where T : Entity
+        {
+            _context.Set<T>().Update(entity);
+        }
+
         public void UpdateRange<T>(List<T> entities) where T : Entity
         {
             _context.Set<T>().UpdateRange(entities);

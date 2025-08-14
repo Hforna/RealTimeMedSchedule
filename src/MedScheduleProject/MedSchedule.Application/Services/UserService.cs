@@ -1,13 +1,16 @@
 ﻿using MedSchedule.Application.Requests;
 using MedSchedule.Application.Responses;
 using MedSchedule.Domain.Aggregates.UserAggregate;
+using MedSchedule.Domain.AggregatesModel.UserAggregate;
 using MedSchedule.Domain.Exceptions;
+using MedSchedule.Domain.Repositories;
 using MedSchedule.Domain.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -89,37 +92,59 @@ namespace MedSchedule.Application.Services
         private readonly ITokenService _tokenService;
         private readonly UserManager<User> _userManager;
         private readonly IPasswordEncryptService _passwordEncrypt;
+        private readonly IUnitOfWork _uow;
 
-        public UserService(ITokenService tokenService, UserManager<User> userManager, IPasswordEncryptService passwordEncrypt)
+        public UserService(ITokenService tokenService, UserManager<User> userManager, 
+            IPasswordEncryptService passwordEncrypt, IUnitOfWork uow)
         {
             _tokenService = tokenService;
             _userManager = userManager;
             _passwordEncrypt = passwordEncrypt;
+            _uow = uow;
         }
 
         public async Task<UserResponse> Create(CreateUserRequest request)
         {
-            var userByEmail = await _userManager.FindByEmailAsync(request.Email);
+            var userByEmail = await _uow.UserRepository.FindByEmail(request.Email);
 
             if (userByEmail is not null)
                 throw new DomainException("This e-mail already is registered");
 
-            var user = new User()
+            using var transaction = await _uow.BeginTransaction();
+
+            try
             {
-                Email = request.Email,
-                PasswordHash = _passwordEncrypt.GenerateHash(request.Password),
-                FirstName = request.FirstName,
-                LastName = request.LastName
-            };
+                var user = new User()
+                {
+                    Email = request.Email,
+                    PasswordHash = _passwordEncrypt.GenerateHash(request.Password),
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    SecurityStamp = Guid.NewGuid().ToString()
+                };
 
-            await _userManager.CreateAsync(user);
-            await _userManager.AddToRoleAsync(user, "patient");
+                await _uow.UserRepository.Add(user);
+                await _uow.Commit();
 
-            return new UserResponse() { 
-                CreatedAt = user.CreatedAt, 
-                FirstName = request.FirstName, 
-                LastName = request.LastName, 
-                Email = request.Email };
+                await _userManager.AddToRoleAsync(user, StaffRoles.Professional);
+                await _uow.Commit();
+
+                await transaction.CommitAsync();
+
+                return new UserResponse()
+                {
+                    CreatedAt = user.CreatedAt,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    Email = request.Email
+                };
+            }
+            catch(Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                throw;
+            }
         }
     }
 }

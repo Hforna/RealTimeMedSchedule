@@ -18,6 +18,8 @@ namespace MedSchedule.Domain.AggregatesModel.UserAggregate
         public required WorkShift WorkShift { get; set; }
         public Guid? SpecialtyId { get; set; }
         public Specialty? Specialty { get; set; }
+        public int TotalServices { get; set; } = 0;
+        public int? AvgConsultationTime { get; set; }
         public IList<Appointment>? Appointments { get; set; }
     }
 

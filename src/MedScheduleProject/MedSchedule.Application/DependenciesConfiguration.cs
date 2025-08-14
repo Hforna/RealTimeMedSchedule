@@ -1,4 +1,5 @@
 ﻿using MedSchedule.Application.Services;
+using MedSchedule.Domain.AggregatesModel.QueueAggregate;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -14,6 +15,7 @@ namespace MedSchedule.Application
         public static void AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             AddServices(services);
+            AddMapper(services);
         }
 
         static void AddServices(IServiceCollection services)
@@ -21,6 +23,13 @@ namespace MedSchedule.Application
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ILoginService, LoginService>();
             services.AddScoped<IAppointmentService, AppointmentService>();
+
+            services.AddScoped<IQueueDomainService, QueueDomainService>();
+        }
+
+        static void AddMapper(IServiceCollection services)
+        {
+            services.AddAutoMapper(cfg => cfg.AddProfile(new MapperService()));
         }
     }
 }

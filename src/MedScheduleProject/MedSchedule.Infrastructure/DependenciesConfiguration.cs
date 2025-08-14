@@ -61,6 +61,9 @@ namespace MedSchedule.Infrastructure
 
             services.AddSingleton<IPasswordEncryptService, BCryptService>();
             services.AddScoped<IRequestService, RequestService>();
+
+            //EmailConfiguration set on program.cs
+            services.AddScoped<IEmailService, EmailService>();
         }
 
         static void AddIdentity(IServiceCollection services)
@@ -69,7 +72,9 @@ namespace MedSchedule.Infrastructure
             {
                 d.User.RequireUniqueEmail = true;
                 d.SignIn.RequireConfirmedEmail = true;
-            }).AddEntityFrameworkStores<ProjectDataContext>();
+            }).AddRoles<Role>()
+            .AddEntityFrameworkStores<ProjectDataContext>()
+            .AddUserManager<UserManager<User>>();
         }
     }
 }

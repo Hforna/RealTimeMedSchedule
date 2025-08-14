@@ -10,5 +10,6 @@ namespace MedSchedule.Domain.Repositories
     {
         public void UpdateRange<T>(List<T> entities) where T : Entity;
         public Task Add<T>(T entity) where T : Entity;
+        public void Update<T>(T entity) where T : Entity;
     }
 }

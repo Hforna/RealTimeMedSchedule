@@ -34,19 +34,6 @@ namespace MedSchedule.Infrastructure.Persistence
         public DbSet<Specialty> Specialties { get; set; }
         public DbSet<Notification> Notifications { get; set; }
 
-        private List<Specialty> AddDefaultSpecialties()
-        {
-            return new List<Specialty>()
-            {
-                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 20, MinEmergencySlots = 2, Name = "Cardiology" },
-                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 15, MinEmergencySlots = 4, Name = "Pediatrics" },
-                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 90, MinEmergencySlots = 3, Name = "Oncology" },
-                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 30, MinEmergencySlots = 3, Name = "Endocrinology" },
-                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 20, MinEmergencySlots = 4, Name = "Orthopedics" },
-                new Specialty() { Id = Guid.NewGuid(), AvgConsultationTime = 30, MinEmergencySlots = 4, Name = "Ophthalmology" },
-            };
-        }
-
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -59,7 +46,74 @@ namespace MedSchedule.Infrastructure.Persistence
 
             builder.Entity<Specialty>().HasData(AddDefaultSpecialties());
 
+            builder.Entity<Role>().HasData(
+                new Role() { Id = new Guid("05c33ca5-2edd-478c-8472-aa51608c610f"), Name = StaffRoles.Admin, NormalizedName = StaffRoles.Admin.ToUpper() },
+                new Role() { Id = new Guid("4a377ec7-d318-4e31-ae12-0342ab0f04d8"), Name = StaffRoles.Professional, NormalizedName = StaffRoles.Professional.ToUpper() },
+                new Role() { Id = new Guid("78ea5b7f-45ec-4e9b-9522-9526034fa3b9"), Name = "patient", NormalizedName = "PATIENT" }
+                );
+
             builder.ApplyConfigurationsFromAssembly(typeof(ProjectDataContext).Assembly);
+        }
+
+        private List<Specialty> AddDefaultSpecialties()
+        {
+            return new List<Specialty>()
+    {
+        new Specialty()
+        {
+            Id = new Guid("1126ccc3-2137-4a85-888d-b3ba4c73bf0f"),
+            AvgConsultationTime = 30,
+            CreatedAt = new DateTime(2025, 8, 12, 9, 22, 31, 953, DateTimeKind.Utc).AddTicks(2606),
+            MinEmergencySlots = 4,
+            Name = "Ophthalmology",
+            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+        },
+        new Specialty()
+        {
+            Id = new Guid("3e6b5514-5ab9-4410-8a15-ebfaaca453b5"),
+            AvgConsultationTime = 20,
+            CreatedAt = new DateTime(2025, 8, 12, 9, 22, 31, 953, DateTimeKind.Utc).AddTicks(2602),
+            MinEmergencySlots = 4,
+            Name = "Orthopedics",
+            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+        },
+        new Specialty()
+        {
+            Id = new Guid("6797cbd8-4b25-4274-8bc6-3f1550917bbc"),
+            AvgConsultationTime = 30,
+            CreatedAt = new DateTime(2025, 8, 12, 9, 22, 31, 953, DateTimeKind.Utc).AddTicks(2589),
+            MinEmergencySlots = 3,
+            Name = "Endocrinology",
+            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+        },
+        new Specialty()
+        {
+            Id = new Guid("7e8fc7a1-e211-42ea-9d7a-ae7166779c1f"),
+            AvgConsultationTime = 90,
+            CreatedAt = new DateTime(2025, 8, 12, 9, 22, 31, 953, DateTimeKind.Utc).AddTicks(2588),
+            MinEmergencySlots = 3,
+            Name = "Oncology",
+            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+        },
+        new Specialty()
+        {
+            Id = new Guid("9353101a-ab97-4144-a312-516b8d2cac0a"),
+            AvgConsultationTime = 15,
+            CreatedAt = new DateTime(2025, 8, 12, 9, 22, 31, 953, DateTimeKind.Utc).AddTicks(2584),
+            MinEmergencySlots = 4,
+            Name = "Pediatrics",
+            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+        },
+        new Specialty()
+        {
+            Id = new Guid("aa3c4f4a-d218-418e-858c-edc1720ecf59"),
+            AvgConsultationTime = 20,
+            CreatedAt = new DateTime(2025, 8, 12, 9, 22, 31, 953, DateTimeKind.Utc).AddTicks(1967),
+            MinEmergencySlots = 2,
+            Name = "Cardiology",
+            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+        }
+    };
         }
     }
 

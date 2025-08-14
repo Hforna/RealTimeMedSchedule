@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,5 +14,6 @@ namespace MedSchedule.Domain.Repositories
         public IGenericRepository GenericRepository { get; }
         public IQueueRepository  QueueRepository { get; }
         public Task Commit();
+        public Task<IDbContextTransaction> BeginTransaction();
     }
 }

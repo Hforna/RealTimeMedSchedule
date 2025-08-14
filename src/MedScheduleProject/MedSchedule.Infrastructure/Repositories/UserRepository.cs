@@ -20,6 +20,18 @@ namespace MedSchedule.Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task Add(User user)
+        {
+            await _context.Users.AddAsync(user);
+        }
+
+        public async Task<User?> FindByEmail(string email)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .SingleOrDefaultAsync(d => d.Email == email);
+        }
+
         public async Task<List<Staff>?> GetStaffsBySpecialty(Guid specialtyId)
         {
             return await _context.Staffs
@@ -35,6 +47,11 @@ namespace MedSchedule.Infrastructure.Repositories
             return await _context.Specialties
                 .AsNoTracking()
                 .SingleOrDefaultAsync(d => d.Name.Equals(specialty, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public async Task<Staff?> StaffById(Guid staff)
+        {
+            return await _context.Staffs.SingleOrDefaultAsync(d => d.Id == staff);
         }
     }
 }

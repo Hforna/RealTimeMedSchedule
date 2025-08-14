@@ -40,7 +40,6 @@ namespace MedSchedule.Infrastructure.Repositories
                  && time.TimeOfDay >= new TimeSpan(a.Schedule.StartHours, a.Schedule.StartMinutes, 0) 
                  && time.TimeOfDay <= new TimeSpan(a.Schedule.EndHours, a.Schedule.EndMinutes, 0)) == false); 
 
-
             return await availableStaff.ToListAsync();
         }
     }

@@ -77,9 +77,14 @@ namespace MedSchedule.Domain.AggregatesModel.QueueAggregate
                 }
                 else
                 {
+                    rawPositions.Remove(currPosition);
                     notChecked.Add(currPosition);
                 }
             }
+
+            if (notChecked.Any())
+                rawPositions.AddRange(notChecked);
+
             if (!rawPositions.Contains(queuePosition))
                 await _uow.GenericRepository.Add<QueuePosition>(queuePosition);
 

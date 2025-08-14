@@ -1,5 +1,6 @@
 ﻿using MedSchedule.Domain.Repositories;
 using MedSchedule.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,10 @@ namespace MedSchedule.Infrastructure.Repositories
         public IGenericRepository GenericRepository { get; }
         public IQueueRepository QueueRepository { get; }
 
+        public async Task<IDbContextTransaction> BeginTransaction()
+        {
+            return await _context.Database.BeginTransactionAsync();
+        }
 
         public async Task Commit()
         {

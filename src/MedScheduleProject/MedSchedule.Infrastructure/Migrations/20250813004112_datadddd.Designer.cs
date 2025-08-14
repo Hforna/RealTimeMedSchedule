@@ -4,6 +4,7 @@ using MedSchedule.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedSchedule.Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectDataContext))]
-    partial class ProjectDataContextModelSnapshot : ModelSnapshot
+    [Migration("20250813004112_datadddd")]
+    partial class datadddd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -83,26 +86,6 @@ namespace MedSchedule.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("05c33ca5-2edd-478c-8472-aa51608c610f"),
-                            Name = "admin",
-                            NormalizedName = "ADMIN"
-                        },
-                        new
-                        {
-                            Id = new Guid("4a377ec7-d318-4e31-ae12-0342ab0f04d8"),
-                            Name = "professional",
-                            NormalizedName = "PROFESSIONAL"
-                        },
-                        new
-                        {
-                            Id = new Guid("78ea5b7f-45ec-4e9b-9522-9526034fa3b9"),
-                            Name = "patient",
-                            NormalizedName = "PATIENT"
-                        });
                 });
 
             modelBuilder.Entity("MedSchedule.Domain.Aggregates.UserAggregate.User", b =>
