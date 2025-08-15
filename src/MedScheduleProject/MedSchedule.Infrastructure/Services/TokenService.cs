@@ -37,8 +37,8 @@ namespace MedSchedule.Infrastructure.Services
 
             var descriptor = new SecurityTokenDescriptor()
             {
-                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddMinutes(_expiresAt),
+                Subject = new ClaimsIdentity(claims),
                 SigningCredentials = new SigningCredentials(GetSecurityKey(), SecurityAlgorithms.HmacSha256Signature)
             };
 
