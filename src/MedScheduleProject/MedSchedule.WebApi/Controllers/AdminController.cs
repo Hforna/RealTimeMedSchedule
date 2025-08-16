@@ -9,7 +9,7 @@ namespace MedSchedule.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "admin")]
+    //[Authorize(Roles = "admin")]
     public class AdminController : ControllerBase
     {
         private readonly ILogger<AdminController> _logger;
@@ -28,5 +28,8 @@ namespace MedSchedule.WebApi.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost("staffs")]
+        public async Task<IActionResult> CreateNewStaff()
     }
 }

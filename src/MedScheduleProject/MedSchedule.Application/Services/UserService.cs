@@ -126,7 +126,7 @@ namespace MedSchedule.Application.Services
                 await _uow.UserRepository.Add(user);
                 await _uow.Commit();
 
-                await _userManager.AddToRoleAsync(user, StaffRoles.Professional);
+                await _userManager.AddToRoleAsync(user, "patient");
                 await _uow.Commit();
 
                 await transaction.CommitAsync();

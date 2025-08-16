@@ -69,6 +69,9 @@ namespace MedSchedule.Application.Services
             {
                 staff.SpecialtyId = specialty.Id;
 
+                if (string.IsNullOrEmpty(staff.Role))
+                    staff.Role = StaffRoles.Professional;
+
                 _uow.GenericRepository.Update<Staff>(staff);
                 await _uow.Commit();
             }

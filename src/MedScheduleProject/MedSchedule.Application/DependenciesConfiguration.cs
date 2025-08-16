@@ -23,6 +23,7 @@ namespace MedSchedule.Application
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ILoginService, LoginService>();
             services.AddScoped<IAppointmentService, AppointmentService>();
+            services.AddScoped<IAdminService, AdminService>();
 
             services.AddScoped<IQueueDomainService, QueueDomainService>();
         }
