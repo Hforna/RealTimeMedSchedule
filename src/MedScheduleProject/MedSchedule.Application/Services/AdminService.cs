@@ -6,6 +6,7 @@ using MedSchedule.Domain.AggregatesModel.UserAggregate;
 using MedSchedule.Domain.Exceptions;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Domain.Services;
+using MedSchedule.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace MedSchedule.Application.Services
 {
     public interface IAdminService
     {
+        public Task<StaffResponse> CreateNewProfessionalStaff(CreateNewStaffRequest request);
         public Task<StaffResponse> SetSpecialtyToStaff(SetSpecialtyToStaffRequest request);
     }
 
@@ -39,6 +41,28 @@ namespace MedSchedule.Application.Services
             _logger = logger;
             _emailService = emailService;
             _tokenService = tokenService;
+        }
+
+        public async Task<StaffResponse> CreateNewProfessionalStaff(CreateNewStaffRequest request)
+        {
+            var userStaff = await _uow.UserRepository.GetUserById(request.UserId)
+                ?? throw new ResourceNotFoundException("The user by id was not found");
+
+            var specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName) 
+                ?? throw new ResourceNotFoundException("The specialty was not found");
+
+            var staff = new Staff()
+            {
+                WorkShift = _mapper.Map<WorkShift>(request.WorkShift),
+                SpecialtyId = specialty.Id,
+                UserId = request.UserId,
+                Role = StaffRoles.Professional
+            };
+
+            await _uow.GenericRepository.Add<Staff>(staff);
+            await _uow.Commit();
+
+            return _mapper.Map<StaffResponse>(staff);
         }
 
         public async Task<StaffResponse> SetSpecialtyToStaff(SetSpecialtyToStaffRequest request)

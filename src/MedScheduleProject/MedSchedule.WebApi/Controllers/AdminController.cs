@@ -29,7 +29,12 @@ namespace MedSchedule.WebApi.Controllers
             return Ok(result);
         }
 
-        [HttpPost("staffs")]
-        public async Task<IActionResult> CreateNewStaff()
+        [HttpPost("staffs/create-professional")]
+        public async Task<IActionResult> CreateNewStaff([FromBody]CreateNewStaffRequest request)
+        {
+            var result = await _adminService.CreateNewProfessionalStaff(request);
+
+            return Created(string.Empty, result);
+        }
     }
 }
