@@ -46,7 +46,7 @@ namespace MedSchedule.Infrastructure.Repositories
         {
             return await _context.Specialties
                 .AsNoTracking()
-                .SingleOrDefaultAsync(d => d.Name.Equals(specialty, StringComparison.OrdinalIgnoreCase));
+                .SingleOrDefaultAsync(d => d.Name.ToLower() == specialty.ToLower().Trim());
         }
 
         public async Task<Staff?> StaffById(Guid staff)

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using MedSchedule.Application.Requests;
 using MedSchedule.Application.Responses;
 using MedSchedule.Domain.AggregatesModel.UserAggregate;
 using MedSchedule.Domain.ValueObjects;
@@ -17,6 +18,8 @@ namespace MedSchedule.Application
             CreateMap<ScheduleWork, ScheduleWorkResponse>();
 
             CreateMap<Staff, StaffResponse>();
+
+            CreateMap<WorkShiftRequest, WorkShift>();
         }
     }
 }

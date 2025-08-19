@@ -28,7 +28,7 @@ namespace MedSchedule.Domain.ValueObjects
 
         public void Validate()
         {
-            if (StartHours < EndHours || (StartHours == EndHours && StartMinutes <= EndMinutes))
+            if (StartHours > EndHours || (StartHours == EndHours && StartMinutes >= EndMinutes))
                 throw new DomainException("Start time must be higher than end time");
 
             if ((StartHours > 23 || StartHours < 0) || (EndHours > 23 || EndHours < 0))

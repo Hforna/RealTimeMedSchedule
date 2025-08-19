@@ -48,16 +48,20 @@ namespace MedSchedule.Application.Services
             var userStaff = await _uow.UserRepository.GetUserById(request.UserId)
                 ?? throw new ResourceNotFoundException("The user by id was not found");
 
-            var specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName) 
-                ?? throw new ResourceNotFoundException("The specialty was not found");
-
             var staff = new Staff()
             {
                 WorkShift = _mapper.Map<WorkShift>(request.WorkShift),
-                SpecialtyId = specialty.Id,
                 UserId = request.UserId,
                 Role = StaffRoles.Professional
             };
+
+            if(!string.IsNullOrEmpty(request.SpecialtyName))
+            {
+                var specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName)
+                    ?? throw new ResourceNotFoundException("The specialty was not found");
+
+                staff.SpecialtyId = specialty.Id;
+            }
 
             await _uow.GenericRepository.Add<Staff>(staff);
             await _uow.Commit();

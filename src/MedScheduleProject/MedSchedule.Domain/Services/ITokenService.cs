@@ -12,6 +12,7 @@ namespace MedSchedule.Domain.Services
     {
         public string GenerateToken(List<Claim> claims, Guid userId);
         public DateTime GenerateExpiration();
+        public DateTime GenerateRefreshExpiration();
         public string GenerateRefreshToken();
         public Task<User?> GetUserByToken();
     }

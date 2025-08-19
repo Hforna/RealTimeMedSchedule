@@ -79,8 +79,10 @@ namespace MedSchedule.Application.Services
 
             var claims = roles.Select(role => new Claim(ClaimTypes.Role, role)).ToList();
 
+            var accessToken = _tokenService.GenerateToken(claims, user.Id);
+
             return new LoginResponse() { 
-                AccessToken = _tokenService.GenerateToken(claims, user.Id), 
+                AccessToken = accessToken, 
                 ExpiresAt = (DateTime)user.RefreshTokenExpiresAt, 
                 RefreshToken = user.RefreshToken
             };
@@ -117,6 +119,7 @@ namespace MedSchedule.Application.Services
                 var user = new User()
                 {
                     Email = request.Email,
+                    NormalizedEmail = request.Email.ToUpper(),
                     PasswordHash = _passwordEncrypt.GenerateHash(request.Password),
                     FirstName = request.FirstName,
                     LastName = request.LastName,

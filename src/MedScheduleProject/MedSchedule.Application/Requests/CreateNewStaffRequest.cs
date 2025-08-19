@@ -9,7 +9,7 @@ namespace MedSchedule.Application.Requests
     public class CreateNewStaffRequest
     {
         public Guid UserId { get; set; }
-        public string SpecialtyName { get; set; }
+        public string? SpecialtyName { get; set; }
         public WorkShiftRequest WorkShift { get; set; }
     }
 

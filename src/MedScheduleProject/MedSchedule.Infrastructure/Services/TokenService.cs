@@ -1,4 +1,5 @@
 ﻿using MedSchedule.Domain.Aggregates.UserAggregate;
+using MedSchedule.Domain.Exceptions;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Domain.Services;
 using Microsoft.AspNetCore.Identity;
@@ -29,17 +30,23 @@ namespace MedSchedule.Infrastructure.Services
         }
 
         public DateTime GenerateExpiration() => DateTime.UtcNow.AddMinutes(_expiresAt);
-
+        public DateTime GenerateRefreshExpiration() => DateTime.UtcNow.AddHours(_expiresAt);
         public string GenerateRefreshToken() => Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         public string GenerateToken(List<Claim> claims, Guid userId)
         {
             claims.Add(new Claim(ClaimTypes.Sid, userId.ToString()));
 
+            claims.Add(new Claim(
+            JwtRegisteredClaimNames.Exp,
+            new DateTimeOffset(DateTime.UtcNow.AddMinutes(_expiresAt)).ToUnixTimeSeconds().ToString(),
+            ClaimValueTypes.Integer64
+            ));
+
+
             var descriptor = new SecurityTokenDescriptor()
             {
-                Expires = DateTime.UtcNow.AddMinutes(_expiresAt),
                 Subject = new ClaimsIdentity(claims),
-                SigningCredentials = new SigningCredentials(GetSecurityKey(), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(GetSecurityKey(), SecurityAlgorithms.HmacSha256Signature),
             };
 
             var handler = new JwtSecurityTokenHandler();
@@ -56,14 +63,21 @@ namespace MedSchedule.Infrastructure.Services
             if (string.IsNullOrEmpty(token))
                 return null;
 
-            var handler = new JwtSecurityTokenHandler();
+            var validatorParameters = new TokenValidationParameters()
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = GetSecurityKey(),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+            };
 
-            var read = handler.ReadJwtToken(token);
+            var tokenHandler = new JwtSecurityTokenHandler();
 
-            var userId = read.Claims.FirstOrDefault(d => d.Type == ClaimTypes.Sid)!.Value;
-            var parse = Guid.Parse(userId);
+            var principal = tokenHandler.ValidateToken(token, validatorParameters, out var securityToken);
 
-            return await _userRepository.GetUserById(parse);
+            var uid = Guid.Parse(principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value!);
+            var user = await _userRepository.GetUserById(uid);
+            return user;
         }
 
         private SymmetricSecurityKey GetSecurityKey()
