@@ -77,6 +77,8 @@ var tokenValidationParams = new TokenValidationParameters
     RoleClaimType = JwtRegisteredClaimNames.Typ
 };
 
+builder.Services.AddSingleton<TokenValidationParameters>(tokenValidationParams);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

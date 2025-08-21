@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Client;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +57,8 @@ namespace MedSchedule.Infrastructure
                     signKey,
                     expiresAt,
                     scope.ServiceProvider.GetRequiredService<IRequestService>(),
-                    scope.ServiceProvider.GetRequiredService<IUserRepository>());
+                    scope.ServiceProvider.GetRequiredService<IUserRepository>(),
+                    scope.ServiceProvider.GetRequiredService<TokenValidationParameters>());
                 });
 
             services.AddSingleton<IPasswordEncryptService, BCryptService>();

@@ -20,13 +20,16 @@ namespace MedSchedule.Infrastructure.Services
         private readonly int _expiresAt;
         private readonly IRequestService _requestService;
         private readonly IUserRepository _userRepository;
+        private readonly TokenValidationParameters _tokenValidation;
 
-        public TokenService(string signKey, int expiresAt, IRequestService requestService, IUserRepository userRepository)
+        public TokenService(string signKey, int expiresAt, 
+            IRequestService requestService, IUserRepository userRepository, TokenValidationParameters tokenValidation)
         {
             _signKey = signKey;
             _expiresAt = expiresAt;
             _requestService = requestService;
             _userRepository = userRepository;
+            _tokenValidation = tokenValidation;
         }
 
         public DateTime GenerateExpiration() => DateTime.UtcNow.AddMinutes(_expiresAt);
@@ -34,7 +37,7 @@ namespace MedSchedule.Infrastructure.Services
         public string GenerateRefreshToken() => Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         public string GenerateToken(List<Claim> claims, Guid userId)
         {
-            claims.Add(new Claim(ClaimTypes.Sid, userId.ToString()));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Sid, userId.ToString()));
 
             claims.Add(new Claim(
             JwtRegisteredClaimNames.Exp,
@@ -69,13 +72,20 @@ namespace MedSchedule.Infrastructure.Services
                 IssuerSigningKey = GetSecurityKey(),
                 ValidateIssuer = false,
                 ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(5)
             };
+
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 
             var tokenHandler = new JwtSecurityTokenHandler();
 
-            var principal = tokenHandler.ValidateToken(token, validatorParameters, out var securityToken);
+            var validate = tokenHandler.ValidateToken(token, validatorParameters, out var securityToken);
 
-            var uid = Guid.Parse(principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value!);
+            var principal = tokenHandler.ReadJwtToken(token);
+
+            var uid = Guid.Parse(principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sid)!.Value!);
             var user = await _userRepository.GetUserById(uid);
             return user;
         }
