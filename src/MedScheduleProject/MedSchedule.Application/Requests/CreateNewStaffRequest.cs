@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MedSchedule.Domain.AggregatesModel.UserAggregate;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace MedSchedule.Application.Requests
     public class CreateNewStaffRequest
     {
         public Guid UserId { get; set; }
-        public string? SpecialtyName { get; set; }
+        public string Role { get; set; }
         public WorkShiftRequest WorkShift { get; set; }
     }
 

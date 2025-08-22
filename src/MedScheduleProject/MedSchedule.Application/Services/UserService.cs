@@ -123,7 +123,8 @@ namespace MedSchedule.Application.Services
                     PasswordHash = _passwordEncrypt.GenerateHash(request.Password),
                     FirstName = request.FirstName,
                     LastName = request.LastName,
-                    SecurityStamp = Guid.NewGuid().ToString()
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    UserName = $"{request.FirstName} {request.LastName}"
                 };
 
                 await _uow.UserRepository.Add(user);

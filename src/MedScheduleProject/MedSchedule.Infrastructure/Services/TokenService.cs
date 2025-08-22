@@ -19,16 +19,16 @@ namespace MedSchedule.Infrastructure.Services
         private readonly string _signKey;
         private readonly int _expiresAt;
         private readonly IRequestService _requestService;
-        private readonly IUserRepository _userRepository;
+        private readonly IUnitOfWork _uow;
         private readonly TokenValidationParameters _tokenValidation;
 
         public TokenService(string signKey, int expiresAt, 
-            IRequestService requestService, IUserRepository userRepository, TokenValidationParameters tokenValidation)
+            IRequestService requestService, IUnitOfWork uow, TokenValidationParameters tokenValidation)
         {
             _signKey = signKey;
             _expiresAt = expiresAt;
             _requestService = requestService;
-            _userRepository = userRepository;
+            _uow = uow;
             _tokenValidation = tokenValidation;
         }
 
@@ -66,6 +66,28 @@ namespace MedSchedule.Infrastructure.Services
             if (string.IsNullOrEmpty(token))
                 return null;
 
+            var principal = GetClaimsPrincipalFromToken(token);
+
+            var uid = Guid.Parse(principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sid)!.Value!);
+            var user = await _uow.UserRepository.GetUserById(uid);
+            return user;
+        }
+
+        public Guid? GetUserGuidByToken()
+        {
+            var token = _requestService.GetBearerToken();
+
+            if (string.IsNullOrEmpty(token))
+                return null;
+
+            var principal = GetClaimsPrincipalFromToken(token);
+
+            var uid = Guid.Parse(principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sid)!.Value!);
+            return uid;
+        }
+
+        private ClaimsPrincipal GetClaimsPrincipalFromToken(string token)
+        {
             var validatorParameters = new TokenValidationParameters()
             {
                 ValidateIssuerSigningKey = true,
@@ -78,16 +100,9 @@ namespace MedSchedule.Infrastructure.Services
 
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-
             var tokenHandler = new JwtSecurityTokenHandler();
 
-            var validate = tokenHandler.ValidateToken(token, validatorParameters, out var securityToken);
-
-            var principal = tokenHandler.ReadJwtToken(token);
-
-            var uid = Guid.Parse(principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sid)!.Value!);
-            var user = await _userRepository.GetUserById(uid);
-            return user;
+            return tokenHandler.ValidateToken(token, validatorParameters, out var securityToken);
         }
 
         private SymmetricSecurityKey GetSecurityKey()

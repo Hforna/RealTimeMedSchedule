@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MedSchedule.Domain.Exceptions
+{
+    public class UnauthenticatedException : BaseException
+    {
+        public UnauthenticatedException(string message) : base(message)
+        {
+        }
+
+        public UnauthenticatedException(List<string> errors) : base(string.Empty)
+        {
+        }
+    }
+}

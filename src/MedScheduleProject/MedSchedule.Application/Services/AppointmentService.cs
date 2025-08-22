@@ -48,7 +48,10 @@ namespace MedSchedule.Application.Services
             if (request.Time < DateTime.UtcNow)
                 throw new DomainException("Appointment time must be longer than today");
 
-            User? user = await _tokenService.GetUserByToken() ?? throw new RequestException("User must be authenticated for create an appointment");
+            var userUid = _tokenService.GetUserGuidByToken() 
+                ?? throw new RequestException("User must be authenticated for create an appointment");
+
+            var user = await _uow.UserRepository.GetUserById(userUid);
 
             Specialty? specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName)
                 ?? throw new RequestException("Specialty name not exists");
@@ -62,11 +65,11 @@ namespace MedSchedule.Application.Services
                 throw new ResourceNotFoundException($"There aren't {specialty.Name} avaliable");
             }
 
-            var avaliableStaffs = await _uow.AppointmentRepository
+            var avaliableStaffs = await _uow.UserRepository
                 .GetAllSpecialtyStaffAvaliableByIds(staffs.Select(d => d.Id).ToList(), request.Time) 
                 ?? throw new UnavaliableException($"There aren't {specialty.Name} professionals avaliable at this time");
 
-            var professionalLessAppointments = avaliableStaffs.OrderBy(d => d.Appointments!.Count).First();
+            var professionalLessAppointments = avaliableStaffs.OrderBy(d => d.ProfessionalInfos.Appointments!.Count).First();
 
             var schedule = new ScheduleWork(request.Time.Hour, request.Time.Minute);
             schedule.AppointmentDate = request.Time;

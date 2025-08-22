@@ -9,6 +9,6 @@ namespace MedSchedule.Domain.Repositories
 {
     public interface IAppointmentRepository
     {
-        public Task<List<Staff>?> GetAllSpecialtyStaffAvaliableByIds(List<Guid> staffIds, DateTime Time);
+      
     }
 }

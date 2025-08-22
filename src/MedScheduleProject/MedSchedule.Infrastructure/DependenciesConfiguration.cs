@@ -57,7 +57,7 @@ namespace MedSchedule.Infrastructure
                     signKey,
                     expiresAt,
                     scope.ServiceProvider.GetRequiredService<IRequestService>(),
-                    scope.ServiceProvider.GetRequiredService<IUserRepository>(),
+                    scope.ServiceProvider.GetRequiredService<IUnitOfWork>(),
                     scope.ServiceProvider.GetRequiredService<TokenValidationParameters>());
                 });
 

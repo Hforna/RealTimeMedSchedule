@@ -33,6 +33,7 @@ namespace MedSchedule.Infrastructure.Persistence
         public DbSet<Staff> Staffs { get; set; }
         public DbSet<Specialty> Specialties { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<ProfessionalInfos> ProfessionalsInfos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -41,6 +42,8 @@ namespace MedSchedule.Infrastructure.Persistence
             builder.Entity<Notification>().HasMany(d => d.Channels).WithOne(d => d.Notification);
 
             builder.Owned(typeof(ScheduleWork));
+
+            builder.Entity<Staff>().HasOne(d => d.ProfessionalInfos).WithOne(d => d.Staff);
 
             builder.Entity<Staff>().HasOne(d => d.User);
 

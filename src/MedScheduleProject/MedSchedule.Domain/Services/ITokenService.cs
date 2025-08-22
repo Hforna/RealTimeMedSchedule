@@ -15,5 +15,6 @@ namespace MedSchedule.Domain.Services
         public DateTime GenerateRefreshExpiration();
         public string GenerateRefreshToken();
         public Task<User?> GetUserByToken();
+        public Guid? GetUserGuidByToken();
     }
 }

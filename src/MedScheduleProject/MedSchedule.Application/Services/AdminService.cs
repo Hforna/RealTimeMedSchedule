@@ -21,8 +21,8 @@ namespace MedSchedule.Application.Services
 {
     public interface IAdminService
     {
-        public Task<StaffResponse> CreateNewProfessionalStaff(CreateNewStaffRequest request);
-        public Task<StaffResponse> SetSpecialtyToStaff(SetSpecialtyToStaffRequest request);
+        public Task<StaffResponse> CreateNewStaff(CreateNewStaffRequest request);
+        public Task<StaffResponse> AssignSpecialtyToStaff(SetSpecialtyToStaffRequest request);
     }
 
     public class AdminService : IAdminService
@@ -43,25 +43,25 @@ namespace MedSchedule.Application.Services
             _tokenService = tokenService;
         }
 
-        public async Task<StaffResponse> CreateNewProfessionalStaff(CreateNewStaffRequest request)
+        public async Task<StaffResponse> CreateNewStaff(CreateNewStaffRequest request)
         {
+            if (string.IsNullOrEmpty(request.Role) || StaffRoles.IsValidRole(request.Role) == false)
+                throw new RequestException("Cannot create staff with this role");
+
             var userStaff = await _uow.UserRepository.GetUserById(request.UserId)
                 ?? throw new ResourceNotFoundException("The user by id was not found");
+
+            var staffExists = await _uow.UserRepository.UserStaffExists(userStaff.Id);
+
+            if (staffExists)
+                throw new ConflictException("Staff already exists");
 
             var staff = new Staff()
             {
                 WorkShift = _mapper.Map<WorkShift>(request.WorkShift),
                 UserId = request.UserId,
-                Role = StaffRoles.Professional
+                Role = request.Role.ToLower()
             };
-
-            if(!string.IsNullOrEmpty(request.SpecialtyName))
-            {
-                var specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName)
-                    ?? throw new ResourceNotFoundException("The specialty was not found");
-
-                staff.SpecialtyId = specialty.Id;
-            }
 
             await _uow.GenericRepository.Add<Staff>(staff);
             await _uow.Commit();
@@ -69,8 +69,13 @@ namespace MedSchedule.Application.Services
             return _mapper.Map<StaffResponse>(staff);
         }
 
-        public async Task<StaffResponse> SetSpecialtyToStaff(SetSpecialtyToStaffRequest request)
+        public async Task<StaffResponse> AssignSpecialtyToStaff(SetSpecialtyToStaffRequest request)
         {
+            var userUid = _tokenService.GetUserGuidByToken() 
+                ?? throw new UnauthenticatedException("User must be authenticated for set specialty");
+
+            var user = await _uow.UserRepository.GetUserById(userUid);
+
             var staff = await _uow.UserRepository.StaffById(request.StaffId);
 
             if(staff is null)
@@ -80,28 +85,33 @@ namespace MedSchedule.Application.Services
                 throw new RequestException("The staff was not found");
             }
 
-            if (staff.Specialty is not null)
-                throw new DomainException("Staff already have a specialty set");
-
             var specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName)
                 ?? throw new RequestException("Specialty with this name was not found");
 
+            var professionalInfos = await _uow.UserRepository.GetProfessionalInfosByStaffId(staff.Id);
+
             using var transaction = await _uow.BeginTransaction();
-
-            if (staff.User is null)
-                staff.User = await _uow.UserRepository.GetUserById(staff.UserId);
-
-            var user = await _tokenService.GetUserByToken();
 
             try
             {
-                staff.SpecialtyId = specialty.Id;
-
                 if (string.IsNullOrEmpty(staff.Role))
+                {
                     staff.Role = StaffRoles.Professional;
-
-                _uow.GenericRepository.Update<Staff>(staff);
+                    _uow.GenericRepository.Update<Staff>(staff);
+                }
+            
+                if(professionalInfos is null)
+                {
+                    professionalInfos = new ProfessionalInfos() { SpecialtyId = specialty.Id, StaffId = staff.Id };
+                    await _uow.GenericRepository.Add<ProfessionalInfos>(professionalInfos);
+                }
+                else
+                {
+                    professionalInfos.SpecialtyId = specialty.Id;
+                    _uow.GenericRepository.Update<ProfessionalInfos>(professionalInfos);
+                }
                 await _uow.Commit();
+                await transaction.CommitAsync();
             }
             catch(Exception ex)
             {
@@ -122,11 +132,9 @@ namespace MedSchedule.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"The email couldn't be sent to staff: {staff.User!.UserName}");
-                await transaction.RollbackAsync();
 
-                throw new InternalServerException("An unexpected error occured while trying set staff specialty");
+                throw new InternalServerException("An unexpected error occured while trying to set staff specialty");
             }
-            await transaction.CommitAsync();
 
             return _mapper.Map<StaffResponse>(staff);
         }
