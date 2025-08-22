@@ -21,18 +21,18 @@ namespace MedSchedule.WebApi.Controllers
             _adminService = adminService;
         }
 
-        [HttpPost("staffs/specialty")]
-        public async Task<IActionResult> SetSpecialtyToStaff([FromBody]SetSpecialtyToStaffRequest request)
+        [HttpPut("staffs/specialty")]
+        public async Task<IActionResult> AssignSpecialtyToStaff([FromBody]SetSpecialtyToStaffRequest request)
         {
-            var result = await _adminService.SetSpecialtyToStaff(request);
+            var result = await _adminService.AssignSpecialtyToStaff(request);
 
             return Ok(result);
         }
 
-        [HttpPost("staffs/create-professional")]
+        [HttpPost("staffs")]
         public async Task<IActionResult> CreateNewStaff([FromBody]CreateNewStaffRequest request)
         {
-            var result = await _adminService.CreateNewProfessionalStaff(request);
+            var result = await _adminService.CreateNewStaff(request);
 
             return Created(string.Empty, result);
         }
