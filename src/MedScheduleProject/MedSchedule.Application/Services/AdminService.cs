@@ -63,6 +63,12 @@ namespace MedSchedule.Application.Services
                 Role = request.Role.ToLower()
             };
 
+            var professionalInfos = new ProfessionalInfos()
+            {
+                StaffId = staff.Id,
+            };
+
+            await _uow.GenericRepository.Add<ProfessionalInfos>(professionalInfos);
             await _uow.GenericRepository.Add<Staff>(staff);
             await _uow.Commit();
 
@@ -77,6 +83,9 @@ namespace MedSchedule.Application.Services
             var user = await _uow.UserRepository.GetUserById(userUid);
 
             var staff = await _uow.UserRepository.StaffById(request.StaffId);
+
+            if (staff.Role != StaffRoles.Professional)
+                throw new DomainException("Staff must be a professional to assign a specialty");
 
             if(staff is null)
             {
@@ -93,13 +102,7 @@ namespace MedSchedule.Application.Services
             using var transaction = await _uow.BeginTransaction();
 
             try
-            {
-                if (string.IsNullOrEmpty(staff.Role))
-                {
-                    staff.Role = StaffRoles.Professional;
-                    _uow.GenericRepository.Update<Staff>(staff);
-                }
-            
+            {            
                 if(professionalInfos is null)
                 {
                     professionalInfos = new ProfessionalInfos() { SpecialtyId = specialty.Id, StaffId = staff.Id };

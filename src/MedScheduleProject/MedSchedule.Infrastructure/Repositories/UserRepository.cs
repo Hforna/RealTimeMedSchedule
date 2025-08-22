@@ -24,22 +24,27 @@ namespace MedSchedule.Infrastructure.Repositories
         public async Task<List<Staff>?> GetAllSpecialtyStaffAvaliableByIds(List<Guid> staffIds, DateTime time)
         {
             var staffs = _context.Staffs
-                .Where(d => staffIds.Contains(d.Id))
-                .AsQueryable();
+                .Where(d => staffIds.Contains(d.Id)
+                    && d.Role == StaffRoles.Professional
+                    && (time.Hour * 60 + time.Minute) >= (d.WorkShift.StartHours * 60 + d.WorkShift.StartMinutes)
+                    && (time.Hour * 60 + time.Minute) <= (d.WorkShift.EndHours * 60 + d.WorkShift.EndMinutes));
 
-            if (staffs is null)
+            if (await staffs.AnyAsync() == false)
                 throw new ResourceNotFoundException("Id staffs was not found");
 
             var newHours = time.Hour;
             var newMinutes = time.Minute;
             var newDay = time.Day;
 
-            var availableStaff = staffs.Include(d => d.ProfessionalInfos).ThenInclude(d => d.Appointments)
-                 .Where(s => s.ProfessionalInfos != null && s.Role == StaffRoles.Professional && 
-                 s.WorkShift.IsTimeBetweenShift(time) && s.ProfessionalInfos!.Appointments!.Any(a => a.Schedule.AppointmentDate == time
-                 && a.Schedule != null
-                 && time.TimeOfDay >= new TimeSpan(a.Schedule.StartHours, a.Schedule.StartMinutes, 0)
-                 && time.TimeOfDay <= new TimeSpan(a.Schedule.EndHours, a.Schedule.EndMinutes, 0)) == false);
+            var timeOfDay = time.TimeOfDay;
+            var timeInMinutes = timeOfDay.Hours * 60 + timeOfDay.Minutes;
+
+            var availableStaff = staffs
+                       .Where(s => s.ProfessionalInfos!.Appointments!
+                       .Any(a => a.Schedule.AppointmentDate.Date == time.Date &&
+                            (timeInMinutes >= a.Schedule.StartHours * 60 + a.Schedule.StartMinutes
+                            && timeInMinutes <= a.Schedule.EndHours * 60 + a.Schedule.EndMinutes)) == false
+                       );
 
             return await availableStaff.ToListAsync();
         }

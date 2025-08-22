@@ -23,7 +23,9 @@ namespace MedSchedule.Infrastructure.Repositories
 
         public async Task<QueueRoot?> GetQueueRoot(Guid specialtyId, DateTime time)
         {
-            return await _context.QueueRoots.FirstOrDefaultAsync(d => d.QueueDate == time && d.SpecialtyId == specialtyId);
+            return await _context.QueueRoots
+                .Include(d => d.QueuePositions).ThenInclude(d => d.Appointment)
+                .FirstOrDefaultAsync(d => d.QueueDate.Date == time.Date && d.SpecialtyId == specialtyId);
         }
     }
 }

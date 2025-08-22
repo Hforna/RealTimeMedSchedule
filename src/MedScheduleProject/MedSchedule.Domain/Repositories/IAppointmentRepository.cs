@@ -1,4 +1,5 @@
-﻿using MedSchedule.Domain.AggregatesModel.UserAggregate;
+﻿using MedSchedule.Domain.AggregatesModel.AppointmentAggregate;
+using MedSchedule.Domain.AggregatesModel.UserAggregate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace MedSchedule.Domain.Repositories
 {
     public interface IAppointmentRepository
     {
-      
+        public Task<Staff?> GetStaffWithLessAppointments(List<Staff> staffs);
     }
 }

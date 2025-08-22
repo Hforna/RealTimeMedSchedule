@@ -13,6 +13,7 @@ namespace MedSchedule.Application.Responses
         public Guid StaffId { get; set; }
         public Guid PatientId { get; set; }
         public ScheduleWorkResponse ScheduleWork { get; set; }
+        public string SpecialtyName { get; set; }
         public int Duration { get; set; }
         public EAppointmentStatus AppointmentStatus { get; set; }
     }

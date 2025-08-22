@@ -48,10 +48,12 @@ namespace MedSchedule.Domain.AggregatesModel.QueueAggregate
             {
                 Appointment = appointment,
                 AppointmentId = appointment.Id,
-                LastUpdate = DateTime.UtcNow
+                LastUpdate = DateTime.UtcNow,
+                QueueId = queueRoot.Id
             };
 
             queueRoot.QueuePositions.Add(queuePosition);
+
             var rawPositions = queueRoot.QueuePositions
                 .OrderBy(d => d.Appointment.Schedule.AppointmentDate)
                 .ToList();

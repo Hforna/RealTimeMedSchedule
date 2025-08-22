@@ -11,6 +11,7 @@ using MedSchedule.Domain.Services;
 using MedSchedule.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -48,89 +49,123 @@ namespace MedSchedule.Application.Services
             if (request.Time < DateTime.UtcNow)
                 throw new DomainException("Appointment time must be longer than today");
 
-            var userUid = _tokenService.GetUserGuidByToken() 
+            var patientUid = _tokenService.GetUserGuidByToken() 
                 ?? throw new RequestException("User must be authenticated for create an appointment");
 
-            var user = await _uow.UserRepository.GetUserById(userUid);
+            var patient = await _uow.UserRepository.GetUserById(patientUid);
 
             Specialty? specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName)
                 ?? throw new RequestException("Specialty name not exists");
 
             List<Staff>? staffs = await _uow.UserRepository.GetStaffsBySpecialty(specialty.Id);
 
-            if (staffs is null == false)
+            if (staffs is null)
             {
                 _logger.LogError($"None staffs with {specialty.Name} specialty were found");
 
                 throw new ResourceNotFoundException($"There aren't {specialty.Name} avaliable");
             }
 
-            var avaliableStaffs = await _uow.UserRepository
-                .GetAllSpecialtyStaffAvaliableByIds(staffs.Select(d => d.Id).ToList(), request.Time) 
-                ?? throw new UnavaliableException($"There aren't {specialty.Name} professionals avaliable at this time");
+            Staff? professionalLessAppointments;
 
-            var professionalLessAppointments = avaliableStaffs.OrderBy(d => d.ProfessionalInfos.Appointments!.Count).First();
+            try
+            {
+                var avaliableStaffs = await _uow.UserRepository
+                    .GetAllSpecialtyStaffAvaliableByIds(staffs.Select(d => d.Id).ToList(), request.Time)
+                    ?? throw new UnavaliableException($"There aren't {specialty.Name} professionals avaliable at this time");
+
+                professionalLessAppointments = await _uow.AppointmentRepository.GetStaffWithLessAppointments(avaliableStaffs)
+                    ?? throw new ResourceNotFoundException("Professional with less appointments couldn't be found");
+            }
+            catch(ResourceNotFoundException ex)
+            {
+                _logger.LogError(ex, $"Professional with less appointments couldn't be found: {ex.Message}");
+
+                throw;
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, $"Error while trying to find a professional: {ex.Message}");
+
+                throw new InternalServerException("Occured an error while trying to find a professional");
+            }
 
             var schedule = new ScheduleWork(request.Time.Hour, request.Time.Minute);
             schedule.AppointmentDate = request.Time;
             schedule.CalculateTotalTimeForFinish(specialty.AvgConsultationTime);
 
-            var appointment = new Appointment()
+            using var transaction = await _uow.BeginTransaction();
+
+            try
             {
-                PatientId = user.Id,
-                PriorityLevel = request.PriorityLevel,
-                SpecialtyId = specialty.Id,
-                StaffId = professionalLessAppointments.Id,
-                AppointmentStatus = Domain.Enums.EAppointmentStatus.Scheduled,
-                Schedule = schedule
-            };
-            await _uow.GenericRepository.Add<Appointment>(appointment);
-            await _uow.Commit();
-
-            var queueRoot = await _uow.QueueRepository.GetQueueRoot(specialty.Id, request.Time);
-            QueuePosition queuePosition;
-
-            if (queueRoot is not null)
-            {
-                queueRoot.TotalPositions++;
-
-                if (queueRoot.QueuePositions.Count > queueRoot.TotalPositions)
-                    throw new DomainException("There aren't slots avaliable today");
-
-                queuePosition = await _queueDomain.SetQueuePosition(queueRoot, appointment);
-            }
-            else
-            {
-                queueRoot = new QueueRoot() { 
-                    QueueDate = new DateTime(request.Time.Year, request.Time.Month, request.Time.Day), 
-                    SpecialtyId = specialty.Id, TotalPositions = 1 };
-
-                queuePosition = new QueuePosition()
+                var appointment = new Appointment()
                 {
-                    AppointmentId = appointment.Id,
-                    RawPosition = 1,
-                    QueueId = queueRoot.Id,
-                    LastUpdate = DateTime.UtcNow,
-                    EstimatedMinutes = specialty.AvgConsultationTime,
-                    EffectivePosition = 1
+                    PatientId = patient.Id,
+                    PriorityLevel = request.PriorityLevel,
+                    SpecialtyId = specialty.Id,
+                    StaffId = professionalLessAppointments.Id,
+                    AppointmentStatus = Domain.Enums.EAppointmentStatus.Scheduled,
+                    Schedule = schedule
                 };
-
-                await _uow.GenericRepository.Add<QueueRoot>(queueRoot);
+                await _uow.GenericRepository.Add<Appointment>(appointment);
                 await _uow.Commit();
 
-                await _uow.GenericRepository.Add<QueuePosition>(queuePosition);
-            }
-            await _uow.Commit();
+                var queueRoot = await _uow.QueueRepository.GetQueueRoot(specialty.Id, request.Time);
+                QueuePosition queuePosition = null!;
 
-            return new AppointmentResponse()
+                if (queueRoot is not null)
+                    queuePosition = await _queueDomain.SetQueuePosition(queueRoot, appointment);
+
+                if(queueRoot is null)
+                {
+                    queueRoot = new QueueRoot()
+                    {
+                        QueueDate = new DateTime(request.Time.Year, request.Time.Month, request.Time.Day),
+                        SpecialtyId = specialty.Id,
+                    };
+
+                    await _uow.GenericRepository.Add<QueueRoot>(queueRoot);
+                    await _uow.Commit();
+
+                    queuePosition = new QueuePosition()
+                    {
+                        AppointmentId = appointment.Id,
+                        RawPosition = 1,
+                        QueueId = queueRoot.Id,
+                        LastUpdate = DateTime.UtcNow,
+                        EstimatedMinutes = specialty.AvgConsultationTime,
+                        EffectivePosition = 1
+                    };
+
+                    await _uow.GenericRepository.Add<QueuePosition>(queuePosition);
+                    await _uow.Commit();
+                }
+
+                return new AppointmentResponse()
+                {
+                    Id = appointment.Id,
+                    AppointmentStatus = appointment.AppointmentStatus,
+                    SpecialtyName = specialty.Name,
+                    Duration = queuePosition.EstimatedMinutes,
+                    PatientId = patient.Id,
+                    StaffId = professionalLessAppointments.Id,
+                    ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule),
+                };
+            }catch(DomainException ex)
             {
-                Id = appointment.Id,
-                AppointmentStatus = appointment.AppointmentStatus,
-                Duration = queuePosition.EstimatedMinutes,
-                PatientId = user.Id,
-                StaffId = professionalLessAppointments.Id,
-                ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule),
-            };
+                _logger.LogError($"A domain exception was threw while trying to configure appointment: {ex.Message}");
+
+                await transaction.RollbackAsync();
+
+                throw;
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, $"Unexpected error while trying to configure appointment: {ex.Message}");
+
+                await transaction.RollbackAsync();
+
+                throw new InternalServerException("Occured an error while trying to configure appointment to patient");
+            }
         }
     }
 }

@@ -23,12 +23,12 @@ namespace MedSchedule.Domain.AggregatesModel.UserAggregate
     {
         public Guid StaffId { get; set; }
         public Staff? Staff { get; set; }
-        public Guid? SpecialtyId { get; set; }
+        public Guid SpecialtyId { get; set; }
         public Specialty? Specialty { get; set; }
         public int TotalServices { get; set; } = 0;
         public int? AvgConsultationTime { get; set; }
-        public int MaxPriorityLevel { get; set; }
-        public IList<Appointment>? Appointments { get; set; }
+        public int MaxPriorityLevel { get; set; } = 0;
+        public IList<Appointment> Appointments { get; set; } = [];
     }
 
     public class StaffRoles

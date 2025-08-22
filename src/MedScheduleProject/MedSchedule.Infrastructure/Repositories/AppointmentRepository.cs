@@ -20,5 +20,14 @@ namespace MedSchedule.Infrastructure.Repositories
         {
             _context = context;
         }
+
+        public async Task<Staff?> GetStaffWithLessAppointments(List<Staff> staffs)
+        {
+            return await _context.Staffs
+                .AsNoTracking()
+                .Where(staff => staffs.Contains(staff))
+                .OrderBy(d => d.ProfessionalInfos!.Appointments.Count)
+                .FirstOrDefaultAsync();
+        }
     }
 }
