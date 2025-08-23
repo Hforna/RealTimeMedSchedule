@@ -24,6 +24,18 @@ namespace MedSchedule.WebApi.Filter
                     case ResourceNotFoundException:
                         statusCode = StatusCodes.Status404NotFound;
                         break;
+                    case ConflictException:
+                        statusCode = StatusCodes.Status409Conflict;
+                        break;
+                    case UnauthenticatedException:
+                        statusCode = StatusCodes.Status400BadRequest;
+                        break;
+                    case UnavaliableException:
+                        statusCode = StatusCodes.Status503ServiceUnavailable;
+                        break;
+                    case UnauthorizedException:
+                        statusCode = StatusCodes.Status401Unauthorized;
+                        break;
                 }
 
                 context.HttpContext.Response.StatusCode = statusCode;

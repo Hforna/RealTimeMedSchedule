@@ -16,4 +16,15 @@ namespace MedSchedule.Domain.Exceptions
         {
         }
     }
+
+    public class UnauthorizedException : BaseException
+    {
+        public UnauthorizedException(string message) : base(message)
+        {
+        }
+
+        public UnauthorizedException(List<string> errors) : base(string.Empty)
+        {
+        }
+    }
 }

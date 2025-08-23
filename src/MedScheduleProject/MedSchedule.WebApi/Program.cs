@@ -79,6 +79,12 @@ var tokenValidationParams = new TokenValidationParameters
 
 builder.Services.AddSingleton<TokenValidationParameters>(tokenValidationParams);
 
+builder.Services.AddAuthorization(d =>
+{
+    d.AddPolicy("OnlyPatients", f => f.RequireRole("Patient", "Admin"));
+    d.AddPolicy("OnlyAdmin", f => f.RequireRole("Admin"));
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

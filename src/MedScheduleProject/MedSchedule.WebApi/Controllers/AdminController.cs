@@ -1,5 +1,6 @@
 ﻿using MedSchedule.Application.Requests;
 using MedSchedule.Application.Services;
+using MedSchedule.WebApi.Filter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,8 @@ namespace MedSchedule.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "admin")]
+    [AuthenticatedUser]
+    [Authorize(Roles = "admin")]
     public class AdminController : ControllerBase
     {
         private readonly ILogger<AdminController> _logger;

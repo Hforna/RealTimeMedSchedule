@@ -1,5 +1,6 @@
 ﻿using MedSchedule.Application.Requests;
 using MedSchedule.Application.Services;
+using MedSchedule.WebApi.Filter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,7 @@ namespace MedSchedule.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AuthenticatedUser]
     public class AppointmentsController : ControllerBase
     {
         private readonly ILogger<AppointmentsController> _logger;
@@ -21,7 +23,7 @@ namespace MedSchedule.WebApi.Controllers
         }
 
         [EnableRateLimiting("create-appointment")]
-        //[Authorize(Roles = "patient")]
+        [Authorize(Roles = "patient")]
         [HttpPost]
         public async Task<IActionResult> CreateNewAppointment([FromBody]AppointmentRequest request)
         {
