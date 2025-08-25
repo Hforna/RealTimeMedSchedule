@@ -25,6 +25,7 @@ namespace MedSchedule.Infrastructure.Repositories
         {
             return await _context.Staffs
                 .AsNoTracking()
+                .Include(d => d.User)
                 .Where(staff => staffs.Contains(staff))
                 .OrderBy(d => d.ProfessionalInfos!.Appointments.Count)
                 .FirstOrDefaultAsync();

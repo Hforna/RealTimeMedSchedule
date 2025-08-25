@@ -33,20 +33,23 @@ namespace MedSchedule.Application.Services
         private readonly ILogger<AppointmentService> _logger;
         private readonly IQueueDomainService _queueDomain;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
 
         public AppointmentService(IUnitOfWork uow, ITokenService tokenService, 
-            ILogger<AppointmentService> logger, IQueueDomainService queueDomain, IMapper mapper)
+            ILogger<AppointmentService> logger, IQueueDomainService queueDomain, 
+            IMapper mapper, IEmailService emailService)
         {
             _uow = uow;
             _tokenService = tokenService;
             _logger = logger;
             _queueDomain = queueDomain;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         public async Task<AppointmentResponse> CreateAppointment(AppointmentRequest request)
         {
-            if (request.Time < DateTime.UtcNow)
+            if (request.Time <= DateTime.UtcNow)
                 throw new DomainException("Appointment time must be longer than today");
 
             var patientUid = _tokenService.GetUserGuidByToken() 
@@ -81,6 +84,10 @@ namespace MedSchedule.Application.Services
             {
                 _logger.LogError(ex, $"Professional with less appointments couldn't be found: {ex.Message}");
 
+                throw;
+            }
+            catch(UnavaliableException ex)
+            {
                 throw;
             }
             catch(Exception ex)
@@ -140,6 +147,16 @@ namespace MedSchedule.Application.Services
                     await _uow.GenericRepository.Add<QueuePosition>(queuePosition);
                     await _uow.Commit();
                 }
+
+                var professionalUser = professionalLessAppointments.User;
+                var professionalFullName = professionalUser.FirstName + professionalUser.LastName;
+
+                await _emailService.SendToPatientAppointmentCreated(
+                    patient.Email!, 
+                    professionalFullName, 
+                    patient.UserName!, 
+                    appointment.Schedule.AppointmentDate, 
+                    appointment.Duration);
 
                 return new AppointmentResponse()
                 {

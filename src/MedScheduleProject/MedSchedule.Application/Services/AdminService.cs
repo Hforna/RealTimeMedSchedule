@@ -78,7 +78,7 @@ namespace MedSchedule.Application.Services
         public async Task<StaffResponse> AssignSpecialtyToStaff(SetSpecialtyToStaffRequest request)
         {
             var userUid = _tokenService.GetUserGuidByToken() 
-                ?? throw new UnauthenticatedException("User must be authenticated for set specialty");
+                ?? throw new NotAuthenticatedException("User must be authenticated for set specialty");
 
             var user = await _uow.UserRepository.GetUserById(userUid);
 

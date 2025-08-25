@@ -30,4 +30,8 @@
   	<ProjectReference Include="..\MedSchedule.Domain\MedSchedule.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\EmailTemplates\" />
+  </ItemGroup>
+
 </Project>
