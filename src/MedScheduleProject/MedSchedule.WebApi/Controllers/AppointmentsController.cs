@@ -23,7 +23,7 @@ namespace MedSchedule.WebApi.Controllers
         }
 
         [EnableRateLimiting("create-appointment")]
-        [Authorize(Roles = "patient")]
+        [Authorize(Policy = "OnlyPatients")]
         [HttpPost]
         public async Task<IActionResult> CreateNewAppointment([FromBody]AppointmentRequest request)
         {

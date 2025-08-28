@@ -31,6 +31,14 @@ namespace MedSchedule.WebApi.Controllers
             return Ok(result);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllStaffs([FromBody]StaffsPaginatedRequest request)
+        {
+            var result = await _adminService.GetAllStaffsPaginated(request);
+
+            return Ok(result);
+        }
+
         [HttpPost("staffs")]
         public async Task<IActionResult> CreateNewStaff([FromBody]CreateNewStaffRequest request)
         {

@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace MedSchedule.Domain.Exceptions
 {
-    public class UnauthenticatedException : BaseException
+    public class NotAuthenticatedException : BaseException
     {
-        public UnauthenticatedException(string message) : base(message)
+        public NotAuthenticatedException(string message) : base(message)
         {
         }
 
-        public UnauthenticatedException(List<string> errors) : base(string.Empty)
+        public NotAuthenticatedException(List<string> errors) : base(string.Empty)
         {
         }
     }

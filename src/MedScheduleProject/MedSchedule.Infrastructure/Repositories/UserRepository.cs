@@ -1,5 +1,6 @@
 ﻿using MedSchedule.Domain.Aggregates.UserAggregate;
 using MedSchedule.Domain.AggregatesModel.UserAggregate;
+using MedSchedule.Domain.DTOs;
 using MedSchedule.Domain.Exceptions;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Infrastructure.Persistence;
@@ -9,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace MedSchedule.Infrastructure.Repositories
 {
@@ -93,6 +96,25 @@ namespace MedSchedule.Infrastructure.Repositories
         public async Task<bool> UserStaffExists(Guid userId)
         {
             return await _context.Staffs.AnyAsync(d => d.UserId == userId);
+        }
+
+        public IPagedList<Staff> GetAllStaffsPaginated(StaffPaginatedFilterDto dto)
+        {
+            var staffs = _context.Staffs.AsNoTracking();
+
+            if (string.IsNullOrEmpty(dto.specialty) == false || dto.minTotalServices is not null || dto.maxTotalServices is not null)
+                staffs = staffs.Where(d => d.Role == StaffRoles.Professional && d.ProfessionalInfos != null);
+
+            if (!string.IsNullOrEmpty(dto.specialty))
+                staffs = staffs.Where(d => d.ProfessionalInfos!.Specialty!.Name == dto.specialty);
+            if (dto.minTotalServices is not null)
+                staffs = staffs.Where(d => d.ProfessionalInfos!.TotalServices >= dto.minTotalServices);
+            if (dto.maxTotalServices is not null)
+                staffs = staffs.Where(d => d.ProfessionalInfos!.TotalServices <= dto.maxTotalServices);
+            if (dto.WorkShift is not null)
+                staffs = staffs.Where(d => dto.WorkShift.startHours <= d.WorkShift.StartHours && dto.WorkShift.endHours >= d.WorkShift.EndHours);
+
+            return staffs.ToPagedList<Staff>(dto.page, dto.perPage);
         }
     }
 }

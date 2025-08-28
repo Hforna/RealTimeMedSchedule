@@ -24,14 +24,11 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />
     <PackageReference Include="MimeKit" Version="4.13.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageReference Include="X.PagedList" Version="10.5.9" />
   </ItemGroup>
 
   <ItemGroup>
   	<ProjectReference Include="..\MedSchedule.Domain\MedSchedule.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\EmailTemplates\" />
   </ItemGroup>
 
 </Project>

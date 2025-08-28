@@ -3,6 +3,7 @@ using MedSchedule.Application.Requests;
 using MedSchedule.Application.Responses;
 using MedSchedule.Domain.Aggregates.UserAggregate;
 using MedSchedule.Domain.AggregatesModel.UserAggregate;
+using MedSchedule.Domain.DTOs;
 using MedSchedule.Domain.Exceptions;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Domain.Services;
@@ -23,6 +24,7 @@ namespace MedSchedule.Application.Services
     {
         public Task<StaffResponse> CreateNewStaff(CreateNewStaffRequest request);
         public Task<StaffResponse> AssignSpecialtyToStaff(SetSpecialtyToStaffRequest request);
+        public Task<StaffsResponse> GetAllStaffsPaginated(StaffsPaginatedRequest request);
     }
 
     public class AdminService : IAdminService
@@ -182,6 +184,33 @@ namespace MedSchedule.Application.Services
             var subject = "You staff specialty has been updated";
 
             await _emailService.SendEmail(body, subject, staffEmail, staffName);
+        }
+
+        public async Task<StaffsResponse> GetAllStaffsPaginated(StaffsPaginatedRequest request)
+        {
+            if (request.PerPage > 100)
+                throw new RequestException("The max per page must be 100");
+
+            if (!string.IsNullOrEmpty(request.SpecialtyName))
+            {
+                var specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName)
+                    ?? throw new RequestException("Specialty with this name was not found");
+            }
+
+            var mapFilterDto = _mapper.Map<StaffPaginatedFilterDto>(request);
+
+            var staffs = _uow.UserRepository.GetAllStaffsPaginated(mapFilterDto);
+
+            var response = new StaffsResponse();
+            response.Staffs = staffs.Select(staff => _mapper.Map<StaffResponse>(staff)).ToList();
+            response.Count = staffs.Count;
+            response.IsFirstPage = staffs.IsFirstPage;
+            response.IsLastPage = staffs.IsLastPage;
+            response.PageNumber = staffs.PageNumber;
+            response.HasNextPage = staffs.HasNextPage;
+            response.HasPreviousPage = staffs.HasPreviousPage;
+
+            return response;
         }
     }
 }

@@ -20,4 +20,15 @@ namespace MedSchedule.Application.Responses
         public int TotalServices { get; set; } = 0;
         public int? AvgConsultationTime { get; set; }
     }
+
+    public class StaffsResponse
+    {
+        public int Count { get; set; }
+        public int PageNumber { get; set; }
+        public List<StaffResponse> Staffs { get; set; }
+        public bool IsFirstPage { get; set; }
+        public bool IsLastPage { get; set; }
+        public bool HasNextPage { get; set; }
+        public bool HasPreviousPage { get; set; }
+    }
 }

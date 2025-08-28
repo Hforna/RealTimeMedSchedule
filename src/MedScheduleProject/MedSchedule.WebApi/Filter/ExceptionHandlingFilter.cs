@@ -27,7 +27,7 @@ namespace MedSchedule.WebApi.Filter
                     case ConflictException:
                         statusCode = StatusCodes.Status409Conflict;
                         break;
-                    case UnauthenticatedException:
+                    case NotAuthenticatedException:
                         statusCode = StatusCodes.Status400BadRequest;
                         break;
                     case UnavaliableException:

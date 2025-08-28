@@ -34,21 +34,25 @@ namespace MedSchedule.Domain.ValueObjects
 
         public void CalculateTotalTimeForFinish(int avgConsultTime)
         {
-            if(StartMinutes + avgConsultTime >= 60)
-            {
-                var toSixty = 60 - StartMinutes;
-                decimal total = (toSixty - avgConsultTime) / 60;
-                var splitTime = total.ToString().Split(".");
-                var totalHours = int.Parse(splitTime[0]);
-                var totalMinutes = int.Parse(splitTime[1][..2]);
+            if (avgConsultTime <= 0)
+                throw new ArgumentException("avgConsultTime must be positive");
 
-                EndHours = totalHours;
-                EndMinutes = totalMinutes;
-            } else
+            var totalMinutes = StartMinutes + avgConsultTime;
+
+            if (totalMinutes >= 60)
+            {
+                var extraHours = totalMinutes / 60;
+                var remainingMinutes = totalMinutes % 60;
+
+                EndHours = StartHours + extraHours;
+                EndMinutes = remainingMinutes;
+            }
+            else
             {
                 EndHours = StartHours;
-                EndMinutes = StartMinutes + avgConsultTime;
+                EndMinutes = totalMinutes;
             }
+
             Validate();
         }
 
