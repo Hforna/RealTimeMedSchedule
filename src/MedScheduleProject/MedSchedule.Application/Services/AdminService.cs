@@ -202,7 +202,7 @@ namespace MedSchedule.Application.Services
             var staffs = _uow.UserRepository.GetAllStaffsPaginated(mapFilterDto);
 
             var response = new StaffsResponse();
-            response.Staffs = staffs.Select(staff => _mapper.Map<StaffResponse>(staff)).ToList();
+            response.Staffs = staffs.Select(staff => _mapper.Map<StaffShortResponse>(staff)).ToList();
             response.Count = staffs.Count;
             response.IsFirstPage = staffs.IsFirstPage;
             response.IsLastPage = staffs.IsLastPage;
