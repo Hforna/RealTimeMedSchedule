@@ -11,7 +11,7 @@ namespace MedSchedule.WebApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [AuthenticatedUser]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly ILogger<AdminController> _logger;
@@ -35,6 +35,14 @@ namespace MedSchedule.WebApi.Controllers
         public async Task<IActionResult> GetAllStaffs([FromBody]StaffsPaginatedRequest request)
         {
             var result = await _adminService.GetAllStaffsPaginated(request);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{staffId}")]
+        public async Task<IActionResult> GetStaffById([FromRoute]Guid staffId)
+        {
+            var result = await _adminService.GetStaffById(staffId);
 
             return Ok(result);
         }

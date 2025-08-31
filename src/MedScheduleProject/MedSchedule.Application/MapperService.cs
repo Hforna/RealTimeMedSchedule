@@ -23,6 +23,8 @@ namespace MedSchedule.Application
             CreateMap<WorkShiftRequest, WorkShift>();
 
             CreateMap<StaffsPaginatedRequest, StaffPaginatedFilterDto>();
+
+            CreateMap<ProfessionalInfos, ProfessionalInfosResponse>();
         }
     }
 }

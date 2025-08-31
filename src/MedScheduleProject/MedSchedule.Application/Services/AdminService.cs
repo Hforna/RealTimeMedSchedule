@@ -25,6 +25,7 @@ namespace MedSchedule.Application.Services
         public Task<StaffResponse> CreateNewStaff(CreateNewStaffRequest request);
         public Task<StaffResponse> AssignSpecialtyToStaff(SetSpecialtyToStaffRequest request);
         public Task<StaffsResponse> GetAllStaffsPaginated(StaffsPaginatedRequest request);
+        public Task<StaffResponse> GetStaffById(Guid id);
     }
 
     public class AdminService : IAdminService
@@ -211,6 +212,17 @@ namespace MedSchedule.Application.Services
             response.HasPreviousPage = staffs.HasPreviousPage;
 
             return response;
+        }
+
+        public async Task<StaffResponse> GetStaffById(Guid id)
+        {
+            var staff = await _uow.UserRepository.StaffById(id) 
+                ?? throw new RequestException("Staff doesn't exist");
+
+            if (staff.Role == StaffRoles.Professional)
+                staff.ProfessionalInfos = await _uow.UserRepository.GetProfessionalInfosByStaffId(staff.Id);
+
+            return _mapper.Map<StaffResponse>(staff);
         }
     }
 }

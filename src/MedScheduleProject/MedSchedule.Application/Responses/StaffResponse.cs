@@ -14,10 +14,10 @@ namespace MedSchedule.Application.Responses
         public Guid UserId { get; set; }
         public string Role { get; set; }
         public required WorkShift WorkShift { get; set; }
-        public ProfessionalInfos? ProfessionalInfos { get; set; }
+        public ProfessionalInfosResponse? ProfessionalInfos { get; set; }
     }
 
-    public class ProfessionalResponse
+    public class ProfessionalInfosResponse
     {
         public Guid? SpecialtyId { get; set; }
         public Specialty? Specialty { get; set; }
