@@ -23,7 +23,7 @@ namespace MedSchedule.Domain.Repositories
         public Task Add(User user);
         public Task<ProfessionalInfos?> GetProfessionalInfosByStaffId(Guid staffId);
         public Task<Staff?> StaffById(Guid staff);
-        public Task<List<Staff>?> GetAllSpecialtyStaffAvaliableByIds(List<Guid> staffIds, DateTime time);
+        public Task<List<Staff>?> GetAllSpecialtyStaffAvaliableByIds(string specialtyName, DateTime time);
         public IPagedList<Staff> GetAllStaffsPaginated(StaffPaginatedFilterDto dto);
     }
 }

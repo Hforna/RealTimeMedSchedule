@@ -5,7 +5,9 @@ using MedSchedule.Domain.Aggregates.UserAggregate;
 using MedSchedule.Domain.AggregatesModel.AppointmentAggregate;
 using MedSchedule.Domain.AggregatesModel.QueueAggregate;
 using MedSchedule.Domain.AggregatesModel.UserAggregate;
+using MedSchedule.Domain.DTOs;
 using MedSchedule.Domain.Exceptions;
+using MedSchedule.Domain.Hubs;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Domain.Services;
 using MedSchedule.Domain.ValueObjects;
@@ -24,6 +26,7 @@ namespace MedSchedule.Application.Services
     public interface IAppointmentService
     {
         public Task<AppointmentResponse> CreateAppointment(AppointmentRequest request);
+        public Task<AppointmentResponse> NextAppointment();
     }
 
     public class AppointmentService : IAppointmentService
@@ -34,16 +37,18 @@ namespace MedSchedule.Application.Services
         private readonly IQueueDomainService _queueDomain;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
+        private readonly IQueueHubService _queueHub;
 
         public AppointmentService(IUnitOfWork uow, ITokenService tokenService, 
             ILogger<AppointmentService> logger, IQueueDomainService queueDomain, 
-            IMapper mapper, IEmailService emailService)
+            IMapper mapper, IEmailService emailService, IQueueHubService queueHub)
         {
             _uow = uow;
             _tokenService = tokenService;
             _logger = logger;
             _queueDomain = queueDomain;
             _mapper = mapper;
+            _queueHub = queueHub;
             _emailService = emailService;
         }
 
@@ -54,31 +59,21 @@ namespace MedSchedule.Application.Services
 
             var patientUid = _tokenService.GetUserGuidByToken() 
                 ?? throw new RequestException("User must be authenticated for create an appointment");
-
             var patient = await _uow.UserRepository.GetUserById(patientUid);
 
             Specialty? specialty = await _uow.UserRepository.SpecialtyByName(request.SpecialtyName)
                 ?? throw new RequestException("Specialty name not exists");
 
-            List<Staff>? staffs = await _uow.UserRepository.GetStaffsBySpecialty(specialty.Id);
-
-            if (staffs is null)
-            {
-                _logger.LogError($"None staffs with {specialty.Name} specialty were found");
-
-                throw new ResourceNotFoundException($"There aren't {specialty.Name} avaliable");
-            }
-
             Staff? professionalLessAppointments;
-
             try
             {
                 var avaliableStaffs = await _uow.UserRepository
-                    .GetAllSpecialtyStaffAvaliableByIds(staffs.Select(d => d.Id).ToList(), request.Time)
-                    ?? throw new UnavaliableException($"There aren't {specialty.Name} professionals avaliable at this time");
+                    .GetAllSpecialtyStaffAvaliableByIds(specialty.Name, request.Time);
 
-                professionalLessAppointments = await _uow.AppointmentRepository.GetStaffWithLessAppointments(avaliableStaffs)
-                    ?? throw new ResourceNotFoundException("Professional with less appointments couldn't be found");
+                if(avaliableStaffs!.Count == 0)
+                    throw new UnavaliableException($"There aren't {specialty.Name} professionals avaliable at this time");
+
+                professionalLessAppointments = await _uow.AppointmentRepository.GetStaffWithLessAppointments(avaliableStaffs);               
             }
             catch(ResourceNotFoundException ex)
             {
@@ -88,6 +83,8 @@ namespace MedSchedule.Application.Services
             }
             catch(UnavaliableException ex)
             {
+                _logger.LogError($"No specialty avaliable at: {request.Time} time");
+
                 throw;
             }
             catch(Exception ex)
@@ -96,15 +93,14 @@ namespace MedSchedule.Application.Services
 
                 throw new InternalServerException("Occured an error while trying to find a professional");
             }
-
-            var schedule = new ScheduleWork(request.Time.Hour, request.Time.Minute);
-            schedule.AppointmentDate = request.Time;
-            schedule.CalculateTotalTimeForFinish(specialty.AvgConsultationTime);
-
             using var transaction = await _uow.BeginTransaction();
 
             try
             {
+                var schedule = new ScheduleWork(request.Time.Hour, request.Time.Minute);
+                schedule.AppointmentDate = request.Time;
+                schedule.CalculateTotalTimeForFinish(specialty.AvgConsultationTime);
+
                 var appointment = new Appointment()
                 {
                     PatientId = patient.Id,
@@ -121,7 +117,9 @@ namespace MedSchedule.Application.Services
                 QueuePosition queuePosition = null!;
 
                 if (queueRoot is not null)
+                {
                     queuePosition = await _queueDomain.SetQueuePosition(queueRoot, appointment);
+                }
 
                 if(queueRoot is null)
                 {
@@ -140,7 +138,7 @@ namespace MedSchedule.Application.Services
                         RawPosition = 1,
                         QueueId = queueRoot.Id,
                         LastUpdate = DateTime.UtcNow,
-                        EstimatedMinutes = specialty.AvgConsultationTime,
+                        EstimatedMinutes = 0,
                         EffectivePosition = 1
                     };
 
@@ -158,12 +156,14 @@ namespace MedSchedule.Application.Services
                     appointment.Schedule.AppointmentDate, 
                     appointment.Duration);
 
+                await transaction.CommitAsync();
+
                 return new AppointmentResponse()
                 {
                     Id = appointment.Id,
                     AppointmentStatus = appointment.AppointmentStatus,
                     SpecialtyName = specialty.Name,
-                    Duration = queuePosition.EstimatedMinutes,
+                    Duration = appointment.Duration,
                     PatientId = patient.Id,
                     StaffId = professionalLessAppointments.Id,
                     ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule),
@@ -183,6 +183,66 @@ namespace MedSchedule.Application.Services
 
                 throw new InternalServerException("Occured an error while trying to configure appointment to patient");
             }
+        }
+
+        public async Task<AppointmentResponse> NextAppointment()
+        {
+            var userUid = _tokenService.GetUserGuidByToken()
+                ?? throw new RequestException("User must be authenticated for create an appointment");
+            var user = await _uow.UserRepository.GetUserById(userUid);
+
+            var staff = await _uow.StaffRepository.GetStaffByUserId(user.Id) ?? throw new UnavaliableException("Staff assigned to user not found");
+
+            if (staff.ProfessionalInfos is null)
+                throw new UnauthorizedException("Staff must be a doctor to manage appointments");
+
+            var queueRoot = await _uow.QueueRepository.GetQueueRootToStaff(staff);
+            var queuePositions = queueRoot!.QueuePositions.OrderByDescending(d => d.EffectivePosition).ToList();
+
+            var inProgress = queuePositions.SingleOrDefault(d => d.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.InProgress);
+            var next = queuePositions.FirstOrDefault(d => d.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.CheckedIn 
+                                                       || d.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.Scheduled);
+            if(inProgress is not null)
+            {
+                inProgress.Appointment.AppointmentStatus = Domain.Enums.EAppointmentStatus.Completed;
+
+                var index = queuePositions.IndexOf(inProgress);
+                if (index == queuePositions.Count - 1)
+                    return new();
+
+                var nextIndex = queuePositions.IndexOf(inProgress) + 1;
+                next = queuePositions[nextIndex];
+                while (next.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.Cancelled)
+                {
+                    if (index == queuePositions.Count - 1)
+                        return new();
+                    nextIndex++;
+                    next = queuePositions[nextIndex];
+                }
+            }
+            next.Appointment.AppointmentStatus = Domain.Enums.EAppointmentStatus.InProgress;
+            var appointment = next.Appointment;
+
+            _uow.GenericRepository.UpdateRange<QueuePosition>(queuePositions);
+            await _uow.Commit();
+
+            var patient = await _uow.UserRepository.GetUserById(appointment.PatientId);
+            var messageToHub = _mapper.Map<QueueInProgressDto>(next);
+            messageToHub.SpecialtyName = staff.ProfessionalInfos.Specialty!.Name;
+            messageToHub.ProfessionalName = user.UserName!;
+            messageToHub.UserName = patient.UserName!;
+            await _queueHub.CurrentAppointmentInProgress(messageToHub);
+
+            return new AppointmentResponse()
+            {
+                Id = appointment.Id,
+                AppointmentStatus = appointment.AppointmentStatus,
+                SpecialtyName = staff.ProfessionalInfos.Specialty!.Name,
+                Duration = next.Appointment.Duration,
+                PatientId = patient.Id,
+                StaffId = staff.Id,
+                ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule),
+            };
         }
     }
 }

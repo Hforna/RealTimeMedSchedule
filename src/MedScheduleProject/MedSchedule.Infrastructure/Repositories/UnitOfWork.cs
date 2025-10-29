@@ -9,24 +9,27 @@ using System.Threading.Tasks;
 
 namespace MedSchedule.Infrastructure.Repositories
 {
-    public class UnitOfWork : IUnitOfWork, IDisposable
+    public class UnitOfWork : IUnitOfWork
     {
         private readonly ProjectDataContext _context;
 
         public UnitOfWork(ProjectDataContext context, IUserRepository userRepository, 
-            IAppointmentRepository appointmentRepository, IGenericRepository genericRepository, IQueueRepository queueRepository)
+            IAppointmentRepository appointmentRepository, IGenericRepository genericRepository, 
+            IQueueRepository queueRepository, IStaffRepository staffRepository)
         {
             _context = context;
             UserRepository = userRepository;
             AppointmentRepository = appointmentRepository;
             GenericRepository = genericRepository;
             QueueRepository = queueRepository;
+            StaffRepository = staffRepository;
         }
 
         public IUserRepository UserRepository { get; }
         public IAppointmentRepository AppointmentRepository { get; }
         public IGenericRepository GenericRepository { get; }
         public IQueueRepository QueueRepository { get; }
+        public IStaffRepository StaffRepository { get; }
 
         public async Task<IDbContextTransaction> BeginTransaction()
         {
@@ -36,12 +39,6 @@ namespace MedSchedule.Infrastructure.Repositories
         public async Task Commit()
         {
             await _context.SaveChangesAsync();
-        }
-
-        public void Dispose()
-        {
-            _context.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }

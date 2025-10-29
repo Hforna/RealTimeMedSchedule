@@ -1,4 +1,5 @@
 ﻿using MedSchedule.Domain.AggregatesModel.QueueAggregate;
+using MedSchedule.Domain.AggregatesModel.UserAggregate;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,14 @@ namespace MedSchedule.Infrastructure.Repositories
             return await _context.QueueRoots
                 .Include(d => d.QueuePositions).ThenInclude(d => d.Appointment)
                 .FirstOrDefaultAsync(d => d.QueueDate.Date == time.Date && d.SpecialtyId == specialtyId);
+        }
+
+        public async Task<QueueRoot?> GetQueueRootToStaff(Staff staff)
+        {
+            return await _context.QueueRoots
+                .Include(d => d.QueuePositions)
+                .ThenInclude(d => d.Appointment)
+                .SingleOrDefaultAsync(d => d.SpecialtyId == staff.ProfessionalInfos.SpecialtyId && d.QueueDate.Date == DateTime.UtcNow.Date);
         }
     }
 }

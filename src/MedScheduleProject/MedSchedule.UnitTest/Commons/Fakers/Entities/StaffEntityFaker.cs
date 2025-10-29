@@ -28,11 +28,28 @@ namespace MedSchedule.UnitTest.Commons.Fakers.Entities
                 startMinutes,
                 endMinutes);
 
+            var user = UserEntityFaker.Generate();
+
             return new Faker<Staff>()
                 .RuleFor(d => d.WorkShift, workShift)
                 .RuleFor(d => d.Role, f => f.PickRandom<string>(StaffRoles.GetAllRoles()))
                 .RuleFor(d => d.Id, Guid.NewGuid())
-                .RuleFor(d => d.UserId, Guid.NewGuid());
+                .RuleFor(d => d.UserId, user.Id)
+                .RuleFor(d => d.User, user);
+        }
+
+        public static ProfessionalInfos GenerateProfessionalInfos()
+        {
+            var specialty = SpecialtyEntityFaker.Generate();
+
+            return new Faker<ProfessionalInfos>()
+                .RuleFor(d => d.StaffId, Guid.NewGuid())
+                .RuleFor(d => d.SpecialtyId, Guid.NewGuid())
+                .RuleFor(d => d.Specialty, specialty)
+                .RuleFor(d => d.Id, specialty.Id)
+                .RuleFor(d => d.TotalServices, 10)
+                .RuleFor(d => d.AvgConsultationTime, 15)
+                .RuleFor(d => d.MaxPriorityLevel, 2);
         }
     }
 }

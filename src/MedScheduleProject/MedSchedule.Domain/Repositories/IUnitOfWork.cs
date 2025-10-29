@@ -13,6 +13,7 @@ namespace MedSchedule.Domain.Repositories
         public IAppointmentRepository AppointmentRepository { get; }
         public IGenericRepository GenericRepository { get; }
         public IQueueRepository  QueueRepository { get; }
+        public IStaffRepository StaffRepository { get; }
         public Task Commit();
         public Task<IDbContextTransaction> BeginTransaction();
     }

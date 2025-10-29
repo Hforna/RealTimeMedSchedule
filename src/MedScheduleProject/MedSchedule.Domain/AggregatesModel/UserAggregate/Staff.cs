@@ -17,6 +17,7 @@ namespace MedSchedule.Domain.AggregatesModel.UserAggregate
         public string Role { get; set; }
         public required WorkShift WorkShift { get; set; }
         public ProfessionalInfos? ProfessionalInfos { get; set; }
+        public ICollection<Appointment> Appointments { get; set; } = [];
     }
 
     public class ProfessionalInfos : Entity

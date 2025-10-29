@@ -1,7 +1,9 @@
 using MedSchedule.Application;
+using MedSchedule.Domain.Hubs;
 using MedSchedule.Infrastructure;
 using MedSchedule.Infrastructure.Services;
 using MedSchedule.WebApi.Filter;
+using MedSchedule.WebApi.Hubs;
 using MedSchedule.WebApi.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
@@ -9,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -21,6 +24,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "MedSchedule API", Version = "v1" });
 
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
@@ -52,12 +56,16 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
+
 builder.Services.AddMvc(d => d.Filters.Add(typeof(ExceptionHandlingFilter)));
 
 builder.Services.AddRouting(d => d.LowercaseUrls = true);
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
+
+builder.Services.AddScoped<IQueueHubService, QueueHubService>();
 
 var signKey = builder.Configuration.GetValue<string>("services:auth:token:signKey");
 
@@ -83,6 +91,7 @@ builder.Services.AddAuthorization(d =>
 {
     d.AddPolicy("OnlyPatients", f => f.RequireRole("Patient", "Admin"));
     d.AddPolicy("OnlyAdmin", f => f.RequireRole("Admin"));
+    d.AddPolicy("OnlyStaffs", f => f.RequireRole("Admin", "Staff"));
 });
 
 builder.Services.AddAuthentication(options =>
@@ -112,6 +121,8 @@ builder.Services.Configure<EmailConfiguration>(builder.Configuration.GetSection(
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -120,6 +131,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapHub<QueueHub>("hubs/queue");
 
 app.UseHttpsRedirection();
 

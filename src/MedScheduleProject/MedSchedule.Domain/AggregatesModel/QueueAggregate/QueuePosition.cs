@@ -83,21 +83,21 @@ namespace MedSchedule.Domain.AggregatesModel.QueueAggregate
                 }
             }
 
-            if(notChecked.Count  > 0)
+            if(notChecked.Count > 0)
             {
-                var lastEffective = rawPositions[rawPositions.Count - 1].EffectivePosition;
+                var lastEffective = checkedIn.Count > 0 ? checkedIn[checkedIn.Count - 1].EffectivePosition : 0;
                 for (var i = 0; i < notChecked.Count; i++)
                 {
                     notChecked[i].EffectivePosition = lastEffective + 1;
-                    rawPositions.Add(notChecked[i]);
+                    checkedIn.Add(notChecked[i]);
                     lastEffective++;
                 }
             }
 
-            if (!rawPositions.Any(p => p.AppointmentId == queuePosition.AppointmentId))
+            if (!checkedIn.Any(p => p.AppointmentId == queuePosition.AppointmentId))
                 await _uow.GenericRepository.Add<QueuePosition>(queuePosition);
 
-            _uow.GenericRepository.UpdateRange<QueuePosition>(rawPositions);
+            _uow.GenericRepository.UpdateRange<QueuePosition>(checkedIn);
             await _uow.Commit();
 
             return queuePosition;

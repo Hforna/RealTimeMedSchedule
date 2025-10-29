@@ -35,7 +35,7 @@ namespace MedSchedule.Infrastructure.Services
 
             using(var client = new SmtpClient())
             {
-                client.Connect(_emailConfiguration.Provider, _emailConfiguration.Port, SecureSocketOptions.StartTls);
+                client.Connect(_emailConfiguration.Provider, _emailConfiguration.Port, SecureSocketOptions.SslOnConnect);
                 client.Authenticate(_emailConfiguration.Email, _emailConfiguration.Password);
                 await client.SendAsync(message);
 

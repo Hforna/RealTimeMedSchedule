@@ -1,4 +1,5 @@
 ﻿using MedSchedule.Application.Requests;
+using MedSchedule.Application.Responses;
 using MedSchedule.Application.Services;
 using MedSchedule.WebApi.Filter;
 using Microsoft.AspNetCore.Authorization;
@@ -22,14 +23,30 @@ namespace MedSchedule.WebApi.Controllers
             _appointmentService = appointmentService;
         }
 
+        /// <summary>
+        /// Create a new appointment for patient and calculate it queue position
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns>return a response containing data about the appointment created</returns>
         [EnableRateLimiting("create-appointment")]
-        [Authorize(Policy = "OnlyPatients")]
+        //[Authorize(Policy = "OnlyPatients")]
         [HttpPost]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(AppointmentResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> CreateNewAppointment([FromBody]AppointmentRequest request)
         {
             var result = await _appointmentService.CreateAppointment(request);
 
             return Created(string.Empty, result); 
+        }
+        
+        [HttpGet("next")]
+        //[Authorize(Policy = "OnlyStaffs")]
+        public async Task<IActionResult>  NextAppointment()
+        {
+            var result = await _appointmentService.NextAppointment();
+
+            return Ok(result);
         }
     }
 }

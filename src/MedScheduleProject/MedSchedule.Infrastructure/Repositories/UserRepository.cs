@@ -24,16 +24,18 @@ namespace MedSchedule.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<Staff>?> GetAllSpecialtyStaffAvaliableByIds(List<Guid> staffIds, DateTime time)
+        public async Task<List<Staff>?> GetAllSpecialtyStaffAvaliableByIds(string specialtyName, DateTime time)
         {
+            var normalizeSpecialty = char.ToUpper(specialtyName[0]) + specialtyName.Substring(1);
+
             var staffs = _context.Staffs
-                .Where(d => staffIds.Contains(d.Id)
-                    && d.Role == StaffRoles.Professional
+                .Where(d => d.Role == StaffRoles.Professional
+                    && d.ProfessionalInfos.Specialty!.Name == normalizeSpecialty
                     && (time.Hour * 60 + time.Minute) >= (d.WorkShift.StartHours * 60 + d.WorkShift.StartMinutes)
                     && (time.Hour * 60 + time.Minute) <= (d.WorkShift.EndHours * 60 + d.WorkShift.EndMinutes));
 
             if (await staffs.AnyAsync() == false)
-                throw new ResourceNotFoundException("Id staffs was not found");
+                throw new ResourceNotFoundException("Professionals weren't not found");
 
             var newHours = time.Hour;
             var newMinutes = time.Minute;
@@ -43,7 +45,7 @@ namespace MedSchedule.Infrastructure.Repositories
             var timeInMinutes = timeOfDay.Hours * 60 + timeOfDay.Minutes;
 
             var availableStaff = staffs
-                       .Where(s => s.ProfessionalInfos!.Appointments!
+                       .Where(s => s.Appointments!
                        .Any(a => a.Schedule.AppointmentDate.Date == time.Date &&
                             (timeInMinutes >= a.Schedule.StartHours * 60 + a.Schedule.StartMinutes
                             && timeInMinutes <= a.Schedule.EndHours * 60 + a.Schedule.EndMinutes)) == false
@@ -74,7 +76,7 @@ namespace MedSchedule.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<User?> GetUserById(Guid id) => await _context.Users.SingleOrDefaultAsync(d => d.Id == id);
+        public async Task<User?> GetUserById(Guid id) => await _context.Users.FirstOrDefaultAsync(d => d.Id == id);
 
         public async Task<Specialty?> SpecialtyByName(string specialty)
         {

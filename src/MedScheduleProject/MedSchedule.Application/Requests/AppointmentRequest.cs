@@ -14,4 +14,9 @@ namespace MedSchedule.Application.Requests
         public DateTime Time { get; set; }
         public EPriorityLevel PriorityLevel { get; set; }
     }
+
+    public class FilterAppointmentRequest
+    {
+        
+    }
 }

@@ -42,6 +42,7 @@ namespace MedSchedule.Infrastructure
             services.AddScoped<IAppointmentRepository, AppointmentRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IQueueRepository, QueueRepository>();
+            services.AddScoped<IStaffRepository, StaffRepository>();
         }
 
         static void AddServices(IServiceCollection services, IConfiguration configuration)
