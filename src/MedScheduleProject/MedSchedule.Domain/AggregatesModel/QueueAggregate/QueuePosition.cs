@@ -17,7 +17,10 @@ namespace MedSchedule.Domain.AggregatesModel.QueueAggregate
         public Appointment Appointment { get; set; }
         public Guid QueueId { get; set; }
         public QueueRoot Queue { get; set; }
+        //Raw position is calculated based on date the user schedules appointment,
+        //as soon as they schedule the appointment so the raw position becomes fixed
         public int RawPosition { get; set; }
+        //Estimated minutes for user be called
         public int EstimatedMinutes { get; set; }
         public int EffectivePosition { get; set; }
         public DateTime LastUpdate { get; set; }
@@ -60,34 +63,38 @@ namespace MedSchedule.Domain.AggregatesModel.QueueAggregate
 
             queuePosition.RawPosition = rawPositions.IndexOf(queuePosition) + 1;
 
-            var notChecked = new List<QueuePosition>();
+            var notChecked = rawPositions.Where(p => p.Appointment.CheckInDate == null).ToList();
+            var checkedIn = rawPositions.Where(p => p.Appointment.CheckInDate != null).ToList();
 
-            for(var i = 0; i < rawPositions.Count; i++)
+            for (var i = 0; i < checkedIn.Count; i++)
             {
-                var currPosition = rawPositions[i];
+                var currPosition = checkedIn[i];
                 if (currPosition.Appointment.CheckInDate is not null)
                 {
                     currPosition.EffectivePosition = CalculatePosition(currPosition.Appointment.Schedule.AppointmentDate, 
                         currPosition.Appointment.PriorityLevel, (DateTime)currPosition.Appointment.CheckInDate, currPosition.RawPosition);
 
                     //Calculate time to wait on room until patient be called
-                    var avgConsultTime = appointment.Specialty.AvgConsultationTime;
-                    var patientsAhead = rawPositions[..i];
+                    var avgConsultTime = currPosition.Appointment.Specialty.AvgConsultationTime;
+                    var patientsAhead = rawPositions[..i].Count;
 
-                    currPosition.EstimatedMinutes = avgConsultTime * patientsAhead.Count;
+                    currPosition.EstimatedMinutes = avgConsultTime * patientsAhead;
                     currPosition.LastUpdate = DateTime.UtcNow;
-                }
-                else
-                {
-                    rawPositions.Remove(currPosition);
-                    notChecked.Add(currPosition);
                 }
             }
 
-            if (notChecked.Any())
-                rawPositions.AddRange(notChecked);
+            if(notChecked.Count  > 0)
+            {
+                var lastEffective = rawPositions[rawPositions.Count - 1].EffectivePosition;
+                for (var i = 0; i < notChecked.Count; i++)
+                {
+                    notChecked[i].EffectivePosition = lastEffective + 1;
+                    rawPositions.Add(notChecked[i]);
+                    lastEffective++;
+                }
+            }
 
-            if (!rawPositions.Contains(queuePosition))
+            if (!rawPositions.Any(p => p.AppointmentId == queuePosition.AppointmentId))
                 await _uow.GenericRepository.Add<QueuePosition>(queuePosition);
 
             _uow.GenericRepository.UpdateRange<QueuePosition>(rawPositions);
@@ -104,7 +111,7 @@ namespace MedSchedule.Domain.AggregatesModel.QueueAggregate
 
             _logger.LogInformation($"Position calculated: {rawPosition}");
 
-            return rawPosition;
+            return Math.Max(1, rawPosition);
         }
 
         private int GetPriorityLevel(EPriorityLevel priorityLevel) => priorityLevel switch
