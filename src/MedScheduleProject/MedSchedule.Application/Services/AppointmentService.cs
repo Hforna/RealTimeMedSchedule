@@ -20,6 +20,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MedSchedule.Domain.Enums;
+using X.PagedList;
 
 namespace MedSchedule.Application.Services
 {
@@ -27,6 +29,9 @@ namespace MedSchedule.Application.Services
     {
         public Task<AppointmentResponse> CreateAppointment(AppointmentRequest request);
         public Task<AppointmentResponse> NextAppointment();
+
+        public Task<AppointmentPaginatedResponse> FilterAppointments(int page, int perPage, DateTime? queueDay, string? specialtyName, Guid? staffId, EAppointmentStatus? status,
+            EPriorityLevel? priorityLevel, Guid? patientId);
     }
 
     public class AppointmentService : IAppointmentService
@@ -68,7 +73,8 @@ namespace MedSchedule.Application.Services
             try
             {
                 var avaliableStaffs = await _uow.UserRepository
-                    .GetAllSpecialtyStaffAvaliableByIds(specialty.Name, request.Time);
+                    .GetAllSpecialtyStaffAvaliableByIds(specialty.Name, request.Time) 
+                    ?? throw new UnavaliableException($"There aren't {specialty.Name} professionals avaliable at this time");
 
                 if(avaliableStaffs!.Count == 0)
                     throw new UnavaliableException($"There aren't {specialty.Name} professionals avaliable at this time");
@@ -243,6 +249,21 @@ namespace MedSchedule.Application.Services
                 StaffId = staff.Id,
                 ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule),
             };
+        }
+
+        public async Task<AppointmentPaginatedResponse> FilterAppointments(int page, int perPage, DateTime? queueDay, string? specialtyName, Guid? staffId, EAppointmentStatus? status,
+            EPriorityLevel? priorityLevel, Guid? patientId)
+        {
+            if (perPage > 100)
+                throw new RequestException("Limit per page is 100");
+
+            var dto = new FilterAppointmentsDto(queueDay, specialtyName, staffId, status, priorityLevel, page, perPage, patientId);
+            var appointments = await _uow.AppointmentRepository.FilterAppointmentsPaginated(dto);
+            
+            var response = _mapper.Map<AppointmentPaginatedResponse>(appointments);
+            response.Appointments = appointments.Results.Select(appointment => _mapper.Map<AppointmentShortResponse>(appointment)).ToList();
+
+            return response;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MedSchedule.Application.Requests;
 using MedSchedule.Application.Responses;
 using MedSchedule.Application.Services;
+using MedSchedule.Domain.Enums;
 using MedSchedule.WebApi.Filter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -23,13 +24,23 @@ namespace MedSchedule.WebApi.Controllers
             _appointmentService = appointmentService;
         }
 
+        [Authorize(Policy = "OnlyStaffs")]
+        [HttpGet("filter")]
+        public async Task<IActionResult> FilterAppointments([FromQuery]DateTime? queueDay, [FromQuery]string? specialtyName, 
+            [FromQuery]Guid? staffId, [FromQuery]EAppointmentStatus? status, [FromQuery]EPriorityLevel? priorityLevel, [FromQuery]Guid? patientId, [FromQuery]int page, [FromQuery]int perPage)
+        {
+            var result = await _appointmentService.FilterAppointments(page, perPage, queueDay, specialtyName, staffId, status, priorityLevel, patientId);
+
+            return Ok(result);
+        }
+
         /// <summary>
         /// Create a new appointment for patient and calculate it queue position
         /// </summary>
         /// <param name="request"></param>
         /// <returns>return a response containing data about the appointment created</returns>
         [EnableRateLimiting("create-appointment")]
-        //[Authorize(Policy = "OnlyPatients")]
+        [Authorize(Policy = "OnlyPatients")]
         [HttpPost]
         [Produces("application/json")]
         [ProducesResponseType(typeof(AppointmentResponse), StatusCodes.Status200OK)]
@@ -41,7 +52,7 @@ namespace MedSchedule.WebApi.Controllers
         }
         
         [HttpGet("next")]
-        //[Authorize(Policy = "OnlyStaffs")]
+        [Authorize(Policy = "OnlyStaffs")]
         public async Task<IActionResult>  NextAppointment()
         {
             var result = await _appointmentService.NextAppointment();

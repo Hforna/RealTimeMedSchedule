@@ -71,7 +71,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
         }
 
         [Fact]
-        public async Task CreateAppointment_StaffForSpecialtyNotExists_ThrowResourceNotFoundException()
+        public async Task CreateAppointment_StaffForSpecialtyNotExists_ThrowUnavaliableException()
         {
             var request = CreateAppointmentRequestFaker.Generate();
             var specialty = SpecialtyEntityFaker.Generate();
@@ -91,7 +91,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
 
             await result
                 .Should()
-                .ThrowExactlyAsync<ResourceNotFoundException>($"There aren't {specialty.Name} avaliable");
+                .ThrowExactlyAsync<UnavaliableException>($"There aren't {specialty.Name} avaliable");
         }
 
         [Fact]

@@ -77,21 +77,21 @@ var tokenValidationParams = new TokenValidationParameters
     IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(signKey!)),
     ValidateIssuer = false,
     ValidateAudience = false,
-    ValidateLifetime = true,     
-    RequireExpirationTime = true,   
-    ClockSkew = TimeSpan.FromMinutes(5),      
+    ValidateLifetime = true,
+    RequireExpirationTime = true,
+    ClockSkew = TimeSpan.FromMinutes(5),
 
     NameClaimType = JwtRegisteredClaimNames.Sub,
-    RoleClaimType = JwtRegisteredClaimNames.Typ
+    RoleClaimType = "role"
 };
 
 builder.Services.AddSingleton<TokenValidationParameters>(tokenValidationParams);
 
 builder.Services.AddAuthorization(d =>
 {
-    d.AddPolicy("OnlyPatients", f => f.RequireRole("Patient", "Admin"));
-    d.AddPolicy("OnlyAdmin", f => f.RequireRole("Admin"));
-    d.AddPolicy("OnlyStaffs", f => f.RequireRole("Admin", "Staff"));
+    d.AddPolicy("OnlyPatients", f => f.RequireRole("patient", "admin"));
+    d.AddPolicy("OnlyAdmin", f => f.RequireRole("admin"));
+    d.AddPolicy("OnlyStaffs", f => f.RequireRole("admin", "staff", "professional"));
 });
 
 builder.Services.AddAuthentication(options =>

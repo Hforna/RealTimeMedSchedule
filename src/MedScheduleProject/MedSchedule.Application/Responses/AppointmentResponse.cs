@@ -7,6 +7,25 @@ using System.Threading.Tasks;
 
 namespace MedSchedule.Application.Responses
 {
+    public class AppointmentPaginatedResponse
+    {
+        public List<AppointmentShortResponse> Appointments { get; set; }
+        public int CurrentPage { get; set; }
+        public int PageSize { get; set; }
+        public int TotalItems { get; set; }
+        public int TotalPages { get; set; }
+        public bool HasPreviousPage { get; set; }
+        public bool HasNextPage { get; set; }
+    }
+
+    public class AppointmentShortResponse
+    {
+        public Guid Id { get; set; }
+        public Guid StaffId { get; set; }
+        public Guid PatientId { get; set; }
+        public ScheduleWorkResponse ScheduleWork { get; set; }
+    }
+    
     public class AppointmentResponse
     {
         public Guid Id { get; set; }

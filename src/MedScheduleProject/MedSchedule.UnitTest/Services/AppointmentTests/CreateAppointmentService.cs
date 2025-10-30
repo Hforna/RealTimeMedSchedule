@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MedSchedule.Application.Services;
 using MedSchedule.Domain.AggregatesModel.QueueAggregate;
+using MedSchedule.Domain.Hubs;
 using MedSchedule.Domain.Repositories;
 using MedSchedule.Domain.Services;
 using Microsoft.Extensions.Logging;
@@ -25,8 +26,9 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
             logger = logger ?? new Mock<ILogger<AppointmentService>>().Object;
             queueDomain = queueDomain ?? new Mock<IQueueDomainService>().Object;
             mapper = mapper ?? new Mock<IMapper>().Object;
+            var queueHub = new Mock<IQueueHubService>().Object;
 
-            return new AppointmentService(uow, tokenService, logger, queueDomain, mapper, emailService);
+            return new AppointmentService(uow, tokenService, logger, queueDomain, mapper, emailService, queueHub);
         }
     }
 }
