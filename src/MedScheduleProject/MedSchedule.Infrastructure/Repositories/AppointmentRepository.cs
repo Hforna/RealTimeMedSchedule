@@ -46,6 +46,11 @@ namespace MedSchedule.Infrastructure.Repositories
                 .AsPaginationAsync(dto.page, dto.perPage);
         }
 
+        public async Task<Appointment?> GetAopointmentById(Guid id)
+        {
+            return await _context.Appointments.Include(d => d.Specialty).SingleOrDefaultAsync(d => d.Id == id);
+        }
+
         public async Task<Staff?> GetStaffWithLessAppointments(List<Staff> staffs)
         {
             return await _context.Staffs

@@ -22,6 +22,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MedSchedule.Domain.Enums;
 using X.PagedList;
+using MedSchedule.Domain.AggregatesModel.PriorityAssignment;
 
 namespace MedSchedule.Application.Services
 {
@@ -29,7 +30,7 @@ namespace MedSchedule.Application.Services
     {
         public Task<AppointmentResponse> CreateAppointment(AppointmentRequest request);
         public Task<AppointmentResponse> NextAppointment();
-
+        public Task<AppointmentResponse> OverridePriority(OverridePriorityRequest request, Guid appointmentId);
         public Task<AppointmentPaginatedResponse> FilterAppointments(int page, int perPage, DateTime? queueDay, string? specialtyName, Guid? staffId, EAppointmentStatus? status,
             EPriorityLevel? priorityLevel, Guid? patientId);
     }
@@ -264,6 +265,60 @@ namespace MedSchedule.Application.Services
             response.Appointments = appointments.Results.Select(appointment => _mapper.Map<AppointmentShortResponse>(appointment)).ToList();
 
             return response;
+        }
+
+        public async Task<AppointmentResponse> OverridePriority(OverridePriorityRequest request, Guid appointmentId)
+        {
+            if (request.PriorityScore > 10)
+                throw new RequestException("Priority score must be between 1 and 10");
+
+            var appointment = await _uow.AppointmentRepository.GetAopointmentById(appointmentId)
+                ?? throw new NotFoundException("Appointment was not found");
+
+            var user = await _tokenService.GetUserByToken();
+            var staff = await _uow.StaffRepository.GetStaffByUserId(user!.Id);
+
+            if (staff.Id != appointment.StaffId || staff.Role != StaffRoles.AppointmentManager)
+                throw new UnauthorizedException("User does not have accces to handle this appointment");
+
+            var priorityOverride = new PriorityOverride()
+            {
+                Reason = request.Reason,
+                NewPriority = request.PriorityScore,
+                OriginalPriority = appointment.PriorityScore,
+                AppointmentId = appointmentId,
+                AuthorizedBy = staff.Id
+            };
+            appointment.PriorityScore = request.PriorityScore;
+
+            try
+            {
+                var queueRoot = await _uow.QueueRepository.GetQueueRoot(appointment.SpecialtyId, appointment.Schedule.AppointmentDate) 
+                    ?? throw new NotFoundException($"Queue root not found to appointment with id {appointment.Id}");
+
+                await _queueDomain.SetQueuePosition(queueRoot, appointment);
+                appointment.AppointmentStatus = EAppointmentStatus.Bumped;
+
+                await _uow.GenericRepository.Add<PriorityOverride>(priorityOverride);
+                _uow.GenericRepository.Update<Appointment>(appointment);
+                await _uow.Commit();
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, "Unexpectadly error occurred while trying to set appointment queue position");
+
+                throw new InternalServerException("Unexpected error occurred while trying to set appointment position on queue");
+            }
+
+            return new AppointmentResponse()
+            {
+                Id = appointment.Id,
+                AppointmentStatus = appointment.AppointmentStatus,
+                SpecialtyName = appointment.Specialty.Name,
+                Duration = appointment.Duration,
+                PatientId = appointment.PatientId,
+                StaffId = appointment.StaffId,
+                ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule),
+            };
         }
     }
 }

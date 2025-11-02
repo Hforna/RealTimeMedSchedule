@@ -33,6 +33,9 @@ namespace MedSchedule.WebApi.Filter
                     case UnavaliableException:
                         statusCode = StatusCodes.Status503ServiceUnavailable;
                         break;
+                    case NotFoundException:
+                        statusCode = StatusCodes.Status404NotFound;
+                        break;
                     case UnauthorizedException:
                         statusCode = StatusCodes.Status401Unauthorized;
                         break;

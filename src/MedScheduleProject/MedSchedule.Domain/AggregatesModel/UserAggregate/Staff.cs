@@ -36,6 +36,7 @@ namespace MedSchedule.Domain.AggregatesModel.UserAggregate
     {
         public const string Professional = "professional";
         public const string Admin = "admin";
+        public const string AppointmentManager = "appointment_manager";
 
         public static bool IsValidRole(string role)
         {

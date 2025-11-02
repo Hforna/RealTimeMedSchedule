@@ -9,7 +9,8 @@ namespace MedSchedule.Domain.Repositories
 {
     public interface IAppointmentRepository
     {
-        Task<Staff?> GetStaffWithLessAppointments(List<Staff> staffs);
-        Task<Pagination<Appointment>> FilterAppointmentsPaginated(FilterAppointmentsDto dto);
+        public Task<Staff?> GetStaffWithLessAppointments(List<Staff> staffs);
+        public Task<Pagination<Appointment>> FilterAppointmentsPaginated(FilterAppointmentsDto dto);
+        public Task<Appointment?> GetAopointmentById(Guid id);
     }
 }

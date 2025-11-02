@@ -59,5 +59,14 @@ namespace MedSchedule.WebApi.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost("{appointmentId}/priority/override")]
+        [Authorize(Policy = "OnlyStaffs")]
+        public async Task<IActionResult> OverridePriority([FromBody]OverridePriorityRequest request, [FromRoute]Guid appointmentId)
+        {
+            var result = await _appointmentService.OverridePriority(request, appointmentId);
+
+            return Ok(result);
+        }
     }
 }

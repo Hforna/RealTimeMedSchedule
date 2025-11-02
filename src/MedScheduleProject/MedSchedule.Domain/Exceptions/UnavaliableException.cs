@@ -16,4 +16,15 @@ namespace MedSchedule.Domain.Exceptions
         {
         }
     }
+
+    public class NotFoundException : BaseException
+    {
+        public NotFoundException(string message) : base(message)
+        {
+        }
+
+        public NotFoundException(List<string> errors) : base(string.Empty)
+        {
+        }
+    }
 }
