@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using MedSchedule.Domain.Enums;
 using X.PagedList;
 using MedSchedule.Domain.AggregatesModel.PriorityAssignment;
+using System.Reflection.Metadata.Ecma335;
 
 namespace MedSchedule.Application.Services
 {
@@ -110,12 +111,12 @@ namespace MedSchedule.Application.Services
 
                 var appointment = new Appointment()
                 {
-                    PatientId = patient.Id,
+                    PatientId = patient!.Id,
                     PriorityLevel = request.PriorityLevel,
                     SpecialtyId = specialty.Id,
-                    StaffId = professionalLessAppointments.Id,
+                    StaffId = professionalLessAppointments!.Id,
                     AppointmentStatus = Domain.Enums.EAppointmentStatus.Scheduled,
-                    Schedule = schedule
+                    Schedule = schedule,
                 };
                 await _uow.GenericRepository.Add<Appointment>(appointment);
                 await _uow.Commit();
@@ -203,34 +204,29 @@ namespace MedSchedule.Application.Services
             if (staff.ProfessionalInfos is null)
                 throw new UnauthorizedException("Staff must be a doctor to manage appointments");
 
-            var queueRoot = await _uow.QueueRepository.GetQueueRootToStaff(staff);
+            var queueRoot = await _uow.QueueRepository.GetQueueRootToStaff(staff) 
+                            ?? throw new NotFoundException("There aren't any appointment scheduled today");
             var queuePositions = queueRoot!.QueuePositions.OrderByDescending(d => d.EffectivePosition).ToList();
 
             var inProgress = queuePositions.SingleOrDefault(d => d.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.InProgress);
-            var next = queuePositions.FirstOrDefault(d => d.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.CheckedIn 
+            var next = queuePositions.FirstOrDefault(d => d.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.CheckedIn
                                                        || d.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.Scheduled);
+
             if(inProgress is not null)
             {
                 inProgress.Appointment.AppointmentStatus = Domain.Enums.EAppointmentStatus.Completed;
-
-                var index = queuePositions.IndexOf(inProgress);
-                if (index == queuePositions.Count - 1)
-                    return new();
-
-                var nextIndex = queuePositions.IndexOf(inProgress) + 1;
-                next = queuePositions[nextIndex];
-                while (next.Appointment.AppointmentStatus == Domain.Enums.EAppointmentStatus.Cancelled)
-                {
-                    if (index == queuePositions.Count - 1)
-                        return new();
-                    nextIndex++;
-                    next = queuePositions[nextIndex];
-                }
+                _uow.GenericRepository.Update<QueuePosition>(inProgress);
             }
+            if (next is null)
+            {
+                await _uow.Commit();
+                return new();
+            }
+
             next.Appointment.AppointmentStatus = Domain.Enums.EAppointmentStatus.InProgress;
             var appointment = next.Appointment;
 
-            _uow.GenericRepository.UpdateRange<QueuePosition>(queuePositions);
+            _uow.GenericRepository.Update<QueuePosition>(next);
             await _uow.Commit();
 
             var patient = await _uow.UserRepository.GetUserById(appointment.PatientId);
@@ -248,11 +244,12 @@ namespace MedSchedule.Application.Services
                 Duration = next.Appointment.Duration,
                 PatientId = patient.Id,
                 StaffId = staff.Id,
-                ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule),
+                ScheduleWork = _mapper.Map<ScheduleWorkResponse>(appointment.Schedule)
             };
         }
 
-        public async Task<AppointmentPaginatedResponse> FilterAppointments(int page, int perPage, DateTime? queueDay, string? specialtyName, Guid? staffId, EAppointmentStatus? status,
+        public async Task<AppointmentPaginatedResponse> FilterAppointments(int page, int perPage, DateTime? queueDay, 
+            string? specialtyName, Guid? staffId, EAppointmentStatus? status,
             EPriorityLevel? priorityLevel, Guid? patientId)
         {
             if (perPage > 100)

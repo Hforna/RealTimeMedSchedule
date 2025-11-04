@@ -24,7 +24,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
             var request = CreateAppointmentRequestFaker.Generate();
             request.Time = DateTime.UtcNow.AddDays(-1);
 
-            var service = new CreateAppointmentService().Create();
+            var service = new AppointmentServiceFixture().Create();
 
             var result = async () => await service.CreateAppointment(request);
 
@@ -38,7 +38,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
         {
             var request = CreateAppointmentRequestFaker.Generate();
 
-            var service = new CreateAppointmentService().Create();
+            var service = new AppointmentServiceFixture().Create();
 
             var result = async () => await service.CreateAppointment(request);
 
@@ -61,7 +61,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
             userRepos.GetMock().Setup(d => d.GetUserById(It.IsAny<Guid>())).ReturnsAsync(UserEntityFaker.Generate());
             var uow = new UnitOfWorkMock().Create(userRepository: userRepos.GetObject());
 
-            var service = new CreateAppointmentService().Create(tokenService: tokenServ.GetObject(), uow: uow);
+            var service = new AppointmentServiceFixture().Create(tokenService: tokenServ.GetObject(), uow: uow);
 
             var result = async () => await service.CreateAppointment(request);
 
@@ -85,7 +85,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
             userRepos.GetMock().Setup(d => d.GetUserById(It.IsAny<Guid>())).ReturnsAsync(UserEntityFaker.Generate());
             userRepos.GetMock().Setup(d => d.SpecialtyByName(request.SpecialtyName)).ReturnsAsync(specialty);
             var uow = new UnitOfWorkMock().Create(userRepos.GetObject());
-            var service = new CreateAppointmentService().Create(uow, tokenService: tokenServ.GetObject());
+            var service = new AppointmentServiceFixture().Create(uow, tokenService: tokenServ.GetObject());
 
             var result = async () => await service.CreateAppointment(request);
 
@@ -114,7 +114,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
                 .ReturnsAsync(SpecialtyEntityFaker.GenerateSpecialtyStaffsInRange(20, request.SpecialtyName));
 
             var uow = new UnitOfWorkMock().Create(userRepos.GetObject());
-            var service = new CreateAppointmentService().Create(uow, tokenService: tokenServ.GetObject());
+            var service = new AppointmentServiceFixture().Create(uow, tokenService: tokenServ.GetObject());
 
             var result = async () => await service.CreateAppointment(request);
 
@@ -169,7 +169,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
             var uow = new UnitOfWorkMock().Create(userRepos.GetObject(), 
                 queueRepository: queueRepos.GetObject(), 
                 appointmentRepository: appointmentRepos.GetObject());
-            var service = new CreateAppointmentService().Create(uow, tokenService: tokenServ.GetObject(), queueDomain: queueDomain.GetObject());
+            var service = new AppointmentServiceFixture().Create(uow, tokenService: tokenServ.GetObject(), queueDomain: queueDomain.GetObject());
 
             var result = async () => await service.CreateAppointment(request);
             var response = await result();
