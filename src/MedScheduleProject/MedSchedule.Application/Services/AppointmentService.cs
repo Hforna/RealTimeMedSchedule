@@ -34,6 +34,8 @@ namespace MedSchedule.Application.Services
         public Task<AppointmentResponse> OverridePriority(OverridePriorityRequest request, Guid appointmentId);
         public Task<AppointmentPaginatedResponse> FilterAppointments(int page, int perPage, DateTime? queueDay, string? specialtyName, Guid? staffId, EAppointmentStatus? status,
             EPriorityLevel? priorityLevel, Guid? patientId);
+
+        public Task<AppointmentResponse> CheckInAppointment(Guid id);
     }
 
     public class AppointmentService : IAppointmentService
@@ -196,7 +198,7 @@ namespace MedSchedule.Application.Services
         public async Task<AppointmentResponse> NextAppointment()
         {
             var userUid = _tokenService.GetUserGuidByToken()
-                ?? throw new RequestException("User must be authenticated for create an appointment");
+                ?? throw new NotAuthenticatedException("User must be authenticated for create an appointment");
             var user = await _uow.UserRepository.GetUserById(userUid);
 
             var staff = await _uow.StaffRepository.GetStaffByUserId(user.Id) ?? throw new UnavaliableException("Staff assigned to user not found");
@@ -264,12 +266,26 @@ namespace MedSchedule.Application.Services
             return response;
         }
 
+        public async Task<AppointmentResponse> CheckInAppointment(Guid id)
+        {
+            var appointment = await _uow.AppointmentRepository.GetAppointmentById(id)
+                ?? throw new NotFoundException("Appointment was not found");
+
+            appointment.CheckInDate = DateTime.UtcNow;
+            appointment.AppointmentStatus = EAppointmentStatus.CheckedIn;
+
+            _uow.GenericRepository.Update<Appointment>(appointment);
+            await _uow.Commit();
+
+            return _mapper.Map<AppointmentResponse>(appointment);
+        }
+
         public async Task<AppointmentResponse> OverridePriority(OverridePriorityRequest request, Guid appointmentId)
         {
             if (request.PriorityScore > 10)
                 throw new RequestException("Priority score must be between 1 and 10");
 
-            var appointment = await _uow.AppointmentRepository.GetAopointmentById(appointmentId)
+            var appointment = await _uow.AppointmentRepository.GetAppointmentById(appointmentId)
                 ?? throw new NotFoundException("Appointment was not found");
 
             var user = await _tokenService.GetUserByToken();

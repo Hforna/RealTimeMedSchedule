@@ -24,10 +24,19 @@ namespace MedSchedule.WebApi.Controllers
             _appointmentService = appointmentService;
         }
 
+        [HttpPost("{id}/check-in")]
+        public async Task<IActionResult> CheckInAppointment([FromRoute]Guid id)
+        {
+            var result = await _appointmentService.CheckInAppointment(id);
+
+            return Ok(result);
+        }
+
         [Authorize(Policy = "OnlyStaffs")]
         [HttpGet("filter")]
         public async Task<IActionResult> FilterAppointments([FromQuery]DateTime? queueDay, [FromQuery]string? specialtyName, 
-            [FromQuery]Guid? staffId, [FromQuery]EAppointmentStatus? status, [FromQuery]EPriorityLevel? priorityLevel, [FromQuery]Guid? patientId, [FromQuery]int page, [FromQuery]int perPage)
+            [FromQuery]Guid? staffId, [FromQuery]EAppointmentStatus? status, 
+            [FromQuery]EPriorityLevel? priorityLevel, [FromQuery]Guid? patientId, [FromQuery]int page, [FromQuery]int perPage)
         {
             var result = await _appointmentService.FilterAppointments(page, perPage, queueDay, specialtyName, staffId, status, priorityLevel, patientId);
 

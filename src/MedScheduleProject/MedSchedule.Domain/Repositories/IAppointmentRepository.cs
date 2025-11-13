@@ -11,6 +11,6 @@ namespace MedSchedule.Domain.Repositories
     {
         public Task<Staff?> GetStaffWithLessAppointments(List<Staff> staffs);
         public Task<Pagination<Appointment>> FilterAppointmentsPaginated(FilterAppointmentsDto dto);
-        public Task<Appointment?> GetAopointmentById(Guid id);
+        public Task<Appointment?> GetAppointmentById(Guid id);
     }
 }
