@@ -22,6 +22,7 @@ namespace MedSchedule.Infrastructure.Repositories
         public async Task<Staff?> GetStaffByUserId(Guid userId)
         {
             return await _context.Staffs
+                .Include(d => d.User)
                 .Include(d => d.ProfessionalInfos)
                 .ThenInclude(d => d.Specialty)
                 .AsNoTracking()

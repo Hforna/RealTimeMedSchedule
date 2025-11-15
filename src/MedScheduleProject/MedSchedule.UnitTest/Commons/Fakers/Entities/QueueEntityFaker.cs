@@ -27,5 +27,17 @@ namespace MedSchedule.UnitTest.Commons.Fakers.Entities
                 .RuleFor(d => d.EstimatedMinutes, 10)
                 .RuleFor(d => d.Id, Guid.NewGuid());
         }
+
+        public static List<QueuePosition> GeneratePositions(int qty, Guid queueRoot)
+        {
+            var positions = new List<QueuePosition>();
+            for(var i = 0; i < qty; i++)
+            {
+                var position = GeneratePosition();
+                position.QueueId = queueRoot;
+                positions.Add(position);
+            }
+            return positions;
+        }
     }
 }

@@ -199,9 +199,9 @@ namespace MedSchedule.Application.Services
         {
             var userUid = _tokenService.GetUserGuidByToken()
                 ?? throw new NotAuthenticatedException("User must be authenticated for create an appointment");
-            var user = await _uow.UserRepository.GetUserById(userUid);
-
-            var staff = await _uow.StaffRepository.GetStaffByUserId(user.Id) ?? throw new UnavaliableException("Staff assigned to user not found");
+            
+            var staff = await _uow.StaffRepository.GetStaffByUserId(userUid) 
+                        ?? throw new UnauthorizedException("Staff assigned to user not found");
 
             if (staff.ProfessionalInfos is null)
                 throw new UnauthorizedException("Staff must be a doctor to manage appointments");
@@ -234,7 +234,7 @@ namespace MedSchedule.Application.Services
             var patient = await _uow.UserRepository.GetUserById(appointment.PatientId);
             var messageToHub = _mapper.Map<QueueInProgressDto>(next);
             messageToHub.SpecialtyName = staff.ProfessionalInfos.Specialty!.Name;
-            messageToHub.ProfessionalName = user.UserName!;
+            messageToHub.ProfessionalName = staff.User.UserName!;
             messageToHub.UserName = patient.UserName!;
             await _queueHub.CurrentAppointmentInProgress(messageToHub);
 

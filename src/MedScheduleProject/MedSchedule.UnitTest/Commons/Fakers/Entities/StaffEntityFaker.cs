@@ -44,7 +44,7 @@ namespace MedSchedule.UnitTest.Commons.Fakers.Entities
 
             return new Faker<ProfessionalInfos>()
                 .RuleFor(d => d.StaffId, Guid.NewGuid())
-                .RuleFor(d => d.SpecialtyId, Guid.NewGuid())
+                .RuleFor(d => d.SpecialtyId, specialty.Id)
                 .RuleFor(d => d.Specialty, specialty)
                 .RuleFor(d => d.Id, specialty.Id)
                 .RuleFor(d => d.TotalServices, 10)

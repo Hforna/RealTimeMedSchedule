@@ -17,19 +17,22 @@ namespace MedSchedule.UnitTest.Commons.Mocks
         public IUnitOfWork Create(IUserRepository? userRepository = null,
             IAppointmentRepository? appointmentRepository = null,
             IGenericRepository? genericRepository = null,
-            IQueueRepository? queueRepository = null)
+            IQueueRepository? queueRepository = null,
+            IStaffRepository? staffRepository = null)
         {
 
             userRepository ??= new Mock<IUserRepository>().Object;
             appointmentRepository ??= new Mock<IAppointmentRepository>().Object;
             genericRepository ??= new Mock<IGenericRepository>().Object;
             queueRepository ??= new Mock<IQueueRepository>().Object;
+            staffRepository ??= new Mock<IStaffRepository>().Object;
 
 
             _mock.Setup(u => u.UserRepository).Returns(userRepository);
             _mock.Setup(u => u.AppointmentRepository).Returns(appointmentRepository);
             _mock.Setup(u => u.GenericRepository).Returns(genericRepository);
             _mock.Setup(u => u.QueueRepository).Returns(queueRepository);
+            _mock.Setup(u => u.StaffRepository).Returns(staffRepository);
 
 
             _mock.Setup(u => u.Commit()).Returns(Task.CompletedTask);
