@@ -12,6 +12,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MedSchedule.Application.Responses;
+using MedSchedule.Domain.ValueObjects;
 
 namespace MedSchedule.UnitTest.Services.AppointmentTests
 {
@@ -119,8 +121,7 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
             var uowObject = uowMock.Create(userRepository: userMock.GetObject(), staffRepository: staffMock.GetObject(),
                 queueRepository: queueMock.GetObject());
 
-            var service = new AppointmentServiceFixture().Create(uowObject, tokenService: tokenMock.GetObject(),
-                mapper: MapperMock.Create());
+            var service = new AppointmentServiceFixture().Create(uowObject, tokenService: tokenMock.GetObject());
 
             var result = await service.NextAppointment();
 
@@ -135,7 +136,6 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
         public async Task NextNull_Should_ReturnEmptyObject()
         {
             var tokenMock = new TokenServiceMock();
-            var userMock = new UserRepositoryMock();
             var staffMock = new StaffRepositoryMock();
             var queueRootMock = new QueueRepositoryMock();
 
@@ -165,6 +165,44 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
 
         [Fact]
         public async Task NextExists_Should_Return_FullResponse()
+        {
+            var tokenMock = new TokenServiceMock();
+            var staffMock = new StaffRepositoryMock();
+            var queueMock = new QueueRepositoryMock();
+            var userMock = new UserRepositoryMock();
+            
+            var userUid = Guid.NewGuid();
+            tokenMock.GetMock().Setup(d => d.GetUserGuidByToken()).Returns(userUid);
+            var staff = StaffEntityFaker.Generate();
+            staff.ProfessionalInfos = StaffEntityFaker.GenerateProfessionalInfos();
+            staff.ProfessionalInfos.Specialty = SpecialtyEntityFaker.Generate();
+            staffMock.GetMock().Setup(d => d.GetStaffByUserId(userUid)).ReturnsAsync(staff);
+
+            var queueRoot = QueueEntityFaker.GenerateRoot();
+            queueMock.GetMock().Setup(d => d.GetQueueRootToStaff(staff)).ReturnsAsync(queueRoot);
+            queueRoot.QueuePositions = QueueEntityFaker.GeneratePositions(5, queueRoot.Id);
+            queueRoot.QueuePositions[0].Appointment = AppointmentEntityFaker.Generate();
+            var next = queueRoot.QueuePositions[0];
+            next.Appointment.AppointmentStatus = EAppointmentStatus.CheckedIn;
+            next.EffectivePosition = 10000;
+            next.Appointment.Schedule = new ScheduleWork(2, 4, 12, 20);
+            
+            var patient = UserEntityFaker.Generate();
+            next.Appointment.PatientId = patient.Id;
+
+            userMock.GetMock().Setup(d => d.GetUserById(next.Appointment.PatientId)).ReturnsAsync(patient);
+
+            var uowMock = new UnitOfWorkMock();
+            var uowObj = uowMock.Create(userMock.GetObject(), null, null, queueMock.GetObject(), staffMock.GetObject());
+            
+            var service = new AppointmentServiceFixture().Create(uowObj, tokenService: tokenMock.GetObject());
+
+            var result = await service.NextAppointment();
+            
+            Assert.Equal(patient.Id, result.PatientId);
+
+            result.Should().NotBeNull();
+        }
       
     }
 }

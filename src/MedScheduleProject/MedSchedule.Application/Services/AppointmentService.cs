@@ -271,8 +271,7 @@ namespace MedSchedule.Application.Services
             var appointment = await _uow.AppointmentRepository.GetAppointmentById(id)
                 ?? throw new NotFoundException("Appointment was not found");
 
-            appointment.CheckInDate = DateTime.UtcNow;
-            appointment.AppointmentStatus = EAppointmentStatus.CheckedIn;
+            appointment.CheckIn();
 
             _uow.GenericRepository.Update<Appointment>(appointment);
             await _uow.Commit();

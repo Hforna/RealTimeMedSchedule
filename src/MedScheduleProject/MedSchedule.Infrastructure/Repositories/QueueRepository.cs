@@ -32,6 +32,7 @@ namespace MedSchedule.Infrastructure.Repositories
         public async Task<QueueRoot?> GetQueueRootToStaff(Staff staff)
         {
             return await _context.QueueRoots
+                .AsNoTracking()
                 .Include(d => d.QueuePositions)
                 .ThenInclude(d => d.Appointment)
                 .SingleOrDefaultAsync(d => d.SpecialtyId == staff.ProfessionalInfos.SpecialtyId && d.QueueDate.Date == DateTime.UtcNow.Date);

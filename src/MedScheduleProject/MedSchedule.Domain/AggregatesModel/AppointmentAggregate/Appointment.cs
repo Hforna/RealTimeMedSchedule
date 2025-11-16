@@ -33,5 +33,11 @@ namespace MedSchedule.Domain.AggregatesModel.AppointmentAggregate
         public Guid SpecialtyId { get; set; }
         public Specialty Specialty { get; set; }
         public EAppointmentStatus AppointmentStatus { get; set; }
+
+        public void CheckIn()
+        {
+            CheckInDate = DateTime.UtcNow;
+            AppointmentStatus = EAppointmentStatus.CheckedIn;
+        }
     }
 }

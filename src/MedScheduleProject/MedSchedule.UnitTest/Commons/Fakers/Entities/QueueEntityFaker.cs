@@ -34,6 +34,7 @@ namespace MedSchedule.UnitTest.Commons.Fakers.Entities
             for(var i = 0; i < qty; i++)
             {
                 var position = GeneratePosition();
+                position.Appointment = AppointmentEntityFaker.Generate();
                 position.QueueId = queueRoot;
                 positions.Add(position);
             }

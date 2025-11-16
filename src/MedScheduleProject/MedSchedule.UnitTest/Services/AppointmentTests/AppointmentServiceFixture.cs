@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MedSchedule.UnitTest.Commons.Mocks;
 
 namespace MedSchedule.UnitTest.Services.AppointmentTests
 {
@@ -18,17 +19,16 @@ namespace MedSchedule.UnitTest.Services.AppointmentTests
     {
         public AppointmentService Create(IUnitOfWork? uow = null, IEmailService? emailService = null,
             ITokenService? tokenService = null, ILogger<AppointmentService>? logger = null, 
-            IQueueDomainService? queueDomain = null, IMapper? mapper = null)
+            IQueueDomainService? queueDomain = null)
         {
             uow = uow ?? new Mock<IUnitOfWork>().Object;
             emailService = emailService ?? new Mock<IEmailService>().Object;
             tokenService = tokenService ?? new Mock<ITokenService>().Object;
             logger = logger ?? new Mock<ILogger<AppointmentService>>().Object;
             queueDomain = queueDomain ?? new Mock<IQueueDomainService>().Object;
-            mapper = mapper ?? new Mock<IMapper>().Object;
             var queueHub = new Mock<IQueueHubService>().Object;
 
-            return new AppointmentService(uow, tokenService, logger, queueDomain, mapper, emailService, queueHub);
+            return new AppointmentService(uow, tokenService, logger, queueDomain, MapperMock.Create(), emailService, queueHub);
         }
     }
 }
